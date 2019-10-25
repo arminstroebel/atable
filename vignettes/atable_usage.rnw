@@ -1,0 +1,488 @@
+
+
+\documentclass[a4paper,11pt]{article}
+
+\usepackage[utf8]{inputenc}
+
+\usepackage[left=2.5cm, right=2cm, top=2.7cm]{geometry}
+
+
+
+%\VignetteIndexEntry{atable: Create Tables for Reporting Clinical Trials}
+%\VignetteEngine{knitr::knitr}
+%\VignetteEncoding{UTF-8}
+
+\usepackage[plainpages=false, colorlinks, linkcolor=blue, citecolor=blue]{hyperref}
+
+
+
+\usepackage{array}
+% \newcolumntype{L}[1]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}p{#1}}
+% \newcolumntype{C}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}p{#1}}
+% \newcolumntype{R}[1]{>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{#1}}
+
+
+% \usepackage[style=numeric, url=false, backend=biber, sorting=none]{biblatex}
+% \addbibresource{atableusage.bib}
+
+\RequirePackage[sectionbib,round]{natbib}
+\bibliographystyle{abbrvnat}
+
+% \usepackage[table]{xcolor}
+
+\usepackage{csquotes}
+
+
+\date{\today}
+\author{Armin Ströbel}
+\title{atable package: Usage}
+
+
+
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+\listoftables
+
+<<require, echo=FALSE, results='hide', message=FALSE, warning=FALSE>>=
+
+require(knitr)
+require(Hmisc)
+require(datasets)
+require(officer)
+require(flextable)
+require(utils)
+require(atable)
+
+@
+
+
+<<global_chunk_options, echo = FALSE, results='hide'>>=
+
+opts_chunk$set(message = FALSE)
+opts_chunk$set(echo = FALSE)
+opts_chunk$set(warning = FALSE)
+opts_chunk$set(results = "hide")
+
+@
+
+\section{Context}
+The atable package supports the analysis and reporting of controlled clinical trials. Data of clinical trials can be stored in data.frames with rows representing 'patients' and columns representing 'measurements' on these patients or characteristics of the trial design like location or time point of measurement. Generally these data.frames will have some hundred rows and some dozen columns. The columns have different purposes:
+\begin{itemize}
+\item Grouping columns contain the treatment the patient received, e.g.\ new treatment, control group or placebo.
+\item Splitting columns contains strata of the patient, e.g. demographic data like age, gender or time point of measurement.
+\item Target columns are the actual measurements of interest, directly related to the objective of the trial. In the context of ICH E9 \cite{ICHE91999} these columns are called 'endpoints'.
+\end{itemize}
+The task is the comparison of the target columns between the groups, separately for every split column. This is often the first step of clinical trial analysis to get an impression of the distribution of data. The atable package solves this task by applying descriptive statistics and hypothesis tests and arranges the results in a table ready for printing.
+
+Reporting of clinical trials is such a frequent task that guidelines have been written which recommend certain properties of clinical trial reports \cite{Moher2010}. In particular Item 17a of CONSORT states that \enquote{Trial results are often more clearly displayed in a table rather than in the text}. And Item 15 suggests: \enquote{a table showing baseline demographic and clinical characteristics for each group}. The atable package is specifically designed to comply with these two items.
+
+\section{Usage}
+This sections contains examples for copy and paste for those readers in TL;DR-mode. The examples were created with RStudio in a Rnw-file and compiled to pdf with knitr \cite{knitr2018} and \LaTeX \cite{Mittelbach2004}. See folder doc/inst/ for the Rnw-file of this vignette. The atable package only produces tables; it does not produce printable documents. To get a printable document, atable's output must still be converted to other formats with e.\ g.\ Hmisc::latex \cite{Hmisc2018}, officer::body\_add\_table \cite{officer2018} and flextable::regulartable \cite{flextable2018}, see examples below.
+
+\subsection{Apply atable to datasets::ToothGrowth}
+
+datasets::ToothGrowth contains data on tooth length (\verb|len|) depending on three dose levels (\verb|dose|) and two delivery methods of vitamin C (\verb|supp| with levels orange juice or ascorbic acid) in 60 guinea pigs. The design of this experiment is a controlled trial. We use atable to test if tooth length depends on the delivery methods, separately for each dose level. See table \ref{tab:ToothGrowthatable} for the results. This table satisfies the requirements of the CONSORT statement Item 17a \cite{Moher2010}.
+<<ToothGrowth atable, echo=TRUE, results='asis'>>=
+
+# apply atable
+the_table <- atable::atable(ToothGrowth,
+                            target_cols = "len",
+                            group_col = "supp",
+                            split_cols = "dose",
+                            format_to = "Latex")
+
+# send to LaTeX
+Hmisc::latex(the_table,
+             file = "",
+             title = "",
+             label = "tab:ToothGrowthatable",
+             caption = "ToothGrowth analysed by atable.",
+             caption.lot = "ToothGrowth analysed by atable",
+             rowname = NULL)
+
+@
+
+In table \ref{tab:ToothGrowthatable} the categories of the grouping column \verb|supp| (orange juice (OJ) and vitamin C (VC)) are arranged horizontally; the categories of the splitting column \verb|dose| (0.5, 1, 2) are arranged vertically. The number of observations within each stratum defined by these categories is given. Descriptive statistics of the target column \verb|len| are displayed. Also missing and valid values are counted. p-values and test statistics as well as effect sizes with a 95\% confidence interval compare the target column \verb|len| between the categories of the grouping column \verb|dose|. The details about the p-values and confidence intervals can be found in section \ref{sec:Scale of measurement classes and atable}.
+
+The number of observations was 10 in each stratum. There were no missing values.
+For dose 1 and supp OJ the mean (sd) of tooth length was 22.7 (3.91).
+For dose 1 and supp VC the mean (sd) of tooth length was 16.8 (2.52).
+This difference in tooth length is significant with a p-value of 0.0033. The effects size and its 95\% confidence interval is -1.8 (-2.9; -0.69). So in stratum dose 1 the delivery method OJ shows greater tooth length than delivery method VC.
+For dose 0.5 the p-value is 0.055, just barely missed significance. For dose 2 there is no difference in length for the two delivery methods.
+
+\subsection{Apply atable to datasets::mtcars}
+
+datasets::mtcars comprises fuel consumption and 10 aspects of automobile design and performance for 32 automobiles. We use atable to compare Miles per gallon (mpg), horse power (hp), number of forward gears (gear) and $\frac{1}{4}$ mile time (qsec) between number of cylinders (cyl) separately for V-shaped engines (vs) and non-V-shaped engines. See table \ref{tab:mtcarsatable} for the results.
+
+<<mtcars atable, echo=TRUE, results='asis'>>=
+
+# all columns of mtcars are numeric, although some are
+# better represented as factors
+mtcars <- within(datasets::mtcars, {gear <- factor(gear)})
+
+# apply atable
+the_table <- atable::atable(mpg + hp + gear + qsec ~ cyl | vs,
+                            mtcars,
+                            format_to = "Latex")
+# atable also has a formula method.
+# The left side contains the target columns, the right side contains grouping
+# and splitting columns separated by the pipe |
+
+# send to LaTeX
+Hmisc::latex(the_table,
+             file = "",
+             title = "",
+             label = "tab:mtcarsatable",
+             caption = "mtcars analysed by atable.",
+             caption.lot = "mtcars analysed by atable",
+             rowname = NULL)
+@
+
+In table \ref{tab:mtcarsatable} the target columns mpg, hp, gear and qsec are arranged vertically. Statistics and tests are applied to all of them. The grouping columns gear is arranged horizontally. Number of observations was low; some groups only have 4 or less observations, there were empty groups.
+
+For V-shaped engines (vs=0) cars with 8 cylinders have lower miles per gallon, more horse power and more gears that those cars with 4 or 6 cylinders. qsec ($\frac{1}{4}$ mile time) does not depend on number of cylinders. The same conclusion hold for straight engines (vs=0).
+
+\noindent Notes:
+\begin{itemize}
+\item atable chooses the descriptive statistics and statistical tests depending on the class of the target column. See section \ref{sec:Scale of measurement classes and atable} for details.
+\item atable can handle empty groups and gives appropriate results, see cyl=8 and vs=1.
+\item atable casts grouping and splitting columns to factors. Target columns are not casted.
+\item Effect size is not calculated as the grouping column gear has more than two categories.
+\end{itemize}
+
+\subsection{Extract specific values from the table}
+
+Sometimes addressing a specific value of the table is necessary for reporting, but the values are all squeezed in a data.frame, rounded and formatted as characters. atable can also return all results unformatted.
+
+<<Extract specific values from the table, echo=TRUE, results='markup'>>=
+
+unformatted <- atable::atable(mpg + hp + gear + qsec ~ cyl | vs,
+                              mtcars,
+                              format_to = "Raw")
+# format_to = "Raw" tells atable to skip formatting.
+
+# Extract specific values
+unformatted$statistics_result$mpg[[2]]$mean
+unformatted$statistics_result$mpg[[2]]$sd
+@
+
+Now single values are accessible unformatted and can be printed by \verb|\Sexpr{}|. For example: The mean miles per gallon for V-shaped engines with 6 cylinder is \Sexpr{unformatted$statistics_result$mpg[[2]]$mean} with a standard deviation of \Sexpr{unformatted$statistics_result$mpg[[2]]$sd}.
+
+\subsection{Language localisation}
+Sometimes reports in languages other than English are needed. atable's output can be localised. We will set the language to German via the settings package \cite{settings2015}:
+
+<<Localisation, echo=TRUE, results='asis'>>=
+
+# Set german words for the table:
+atable::atable_options(labels_TRUE_FALSE = c("Ja", "Nein"),
+                       labels_Mean_SD = "Mittelwert (SD)" ,
+                       labels_valid_missing = "Ok (fehlend)",
+                       colname_for_observations = "Anzahl",
+                       colname_for_value = "Wert",
+                       colname_for_group = "Gruppe",
+                       replace_NA_by = "fehlend")
+
+# apply atable
+the_table <- atable::atable(atable::test_data,
+             target_cols = c("Logical", "Numeric", "Factor", "Ordered"))
+
+# reset all options to default
+atable_options_reset()
+
+# send to LaTeX
+Hmisc::latex(the_table,
+             file = "",
+             title = "",
+             label = "tab:Localisation",
+             caption = "Localised atable. All identifiers produced by atable are
+                        now translated to german; names of variables and factor
+                        labels supplied in the data.frame remain unchanged.",
+             caption.lot = "Localised atable",
+             rowname = NULL)
+
+
+@
+
+Table \ref{tab:Localisation} shows a localised atable applied to test data shipped with the atable package.
+
+
+\subsection{Word format}
+atable can also produce printable tables for Word. To do this change the argument \verb|format_to| to \verb|'Word'|. The actual print can be done by package flextable and officer:
+
+<<Word, echo=TRUE>>=
+
+for_Word <- atable::atable(mpg + hp + gear + qsec ~ cyl | vs, mtcars,
+                           format_to = "Word")
+
+# print in Word with packages flextable and officer
+
+MyFTable <- flextable::regulartable(data = for_Word)
+# left aligned first column:
+MyFTable <- flextable::align(MyFTable, align = "left", j = 1)
+
+# save on disc. Not run here:
+# doc <- officer::read_docx()
+# doc <- flextable::body_add_flextable(doc, value = MyFTable)
+# print(doc, target = "atable and Word.docx")
+
+@
+
+
+\subsection{HTML format}
+
+atable can also produce printable tables in HTML. To do this change the argument \verb|format_to| to \verb|'HTML'|, put the code in a Rmd-file in RStudio \cite{RStudio2015} and click on knit to start the magic. Code looks like this:
+<<HTML, echo=TRUE>>=
+
+for_HTML <- atable::atable(mpg + hp + gear + qsec ~ cyl | vs,
+                           mtcars,
+                           format_to = "HTML")
+
+options(knitr.kable.NA = '')
+# knitr::kable(for_HTML, caption="HTML table with atable") # not run.
+
+@
+
+\subsection{Console}
+For interactive analysis the results of atable can also be printed human readable in the console.
+<<Console, echo=TRUE>>=
+atable::atable(mpg + hp + gear + qsec ~ cyl | vs,
+                           mtcars,
+                           format_to = "Console")
+@
+Note that argument \verb|format_to| may also be set globally via
+<<atable_options, echo=TRUE, eval=FALSE>>=
+atable_options(format_to = "Console")
+@
+
+
+\section{Scale of measurement, classes and atable} \label{sec:Scale of measurement classes and atable}
+
+Scale of measurement \cite{Stevens1946} is a well known concept in statistics. The scales are: nominal, ordinal and interval. The scale of measurement narrows operations, statistics and tests that are applicable and meaningful for a variable. Some classes in R have the same properties as these scales of measurement. E.g.\ class factor matches the nominal scale, class ordered matches scale ordinal and class numeric maths the interval scale. atable builds on this matching: Depending on the class of a variable suitable descriptive statistics and hypothesis tests are chosen. See table \ref{tab:classesandatable} for details.
+
+
+% \rowcolors{2}{white}{gray!25}
+<<Tabelle with stats and test, results='asis', echo=FALSE>>=
+
+
+
+DD <- matrix(
+  c(
+    c('scale_of_measurement', 'nominal', 'ordinal', 'interval'),
+
+    c('statistic', 'counts occurences of every level', 'as factor', 'Mean and standard deviation'),
+
+    c('two_sample_test', 'chi^2 test', 'Wilcoxon Rank-Sum test', 'Kolmogorov-Smirnov Test'),
+
+    c('effect_size', "two levels: odds ratio, else Cramér's phi", "Cliff's Delta", "Cohen's d"),
+
+    c('multi_sample_test', 'chi^2 test', 'Kruskal-Wallis test', 'Kruskal-Wallis test')
+  ),
+  ncol = 4,
+  byrow = TRUE,
+  dimnames = list(NULL, c('R class', 'factor', 'ordered', 'numeric'))
+)
+
+
+DD <- as.data.frame(DD)
+
+DD[] <- lapply(DD, gsub, pattern = "_", replacement = " ")
+
+DD <- atable::translate_to_LaTeX(DD, greek = TRUE)
+
+Hmisc::latex(DD,
+      file = "",
+      title = "",
+      label = "tab:classesandatable",
+      caption = "Classes and atable. Table shows the descriptive statistics and hypothesis tests, that are
+      applied to the three R classes factor, ordered and numeric. Table also shows the appropriate scale
+      of measurement. Class character and logical are treated as nominal scaled variables.",
+      caption.lot = "Classes and atable",
+      rowname = NULL,
+      first.hline.double = FALSE,
+      collabel.just = c("l|", "l", "l", "l"),
+      col.just = c("p{3.5cm}|", "p{3.5cm}", "p{4cm}", "p{4cm}"),
+      where="!htbp",
+      multicol = FALSE,
+      longtable = FALSE,
+      booktabs = FALSE)
+
+
+
+@
+% \rowcolors{1}{white}{white}
+
+
+The statistical tests in table \ref{tab:classesandatable} are meant for two or more independent samples, which arise in parallel group controlled trials. The statistical tests are all non-parametric. Parametric alternatives exists which have greater statistical power if their requirements are met by the data, but non-parametric tests are chosen for their broader field of application. Additionally just because this random package here uses these tests, does not mean that these tests are suitable to analyse a specific study.
+
+
+
+\section{Modifying atable}
+The current implementation of tests and statistics (see table \ref{tab:classesandatable}) is not suitable for all possible data sets. For example the parametric t-test or the robust estimator median may be more adequate for some datasets. Also dates and times are currently not handled by atable.
+
+It is intended that some parts of the atable package can be altered by the user. This modification is accomplished by replacing the underlying methods or adding new ones, while preserving the structure of arguments and results of the old functions. The workflow of atable (and the corresponding function in brackets) is as follows:
+\begin{enumerate}
+\item calculate statistics (\verb|statistics|)
+\item apply hypothesis tests (\verb|two_sample_htest| and \verb|multi_sample_htest|)
+\item format statistics results (\verb|format_statistics|)
+\item format hypothesis test results (\verb|format_tests|).
+\end{enumerate}
+These four functions may be altered by the user by replacing existing or adding new methods to already existing S3-generics. Here are two examples:
+
+\subsection{Replace existing methods}
+\label{sec:Replace existing methods}
+This example replaces \verb|two_sample_htest.numeric| with a new function that applies \verb|t.test|, \verb|ks.test| and \verb|cohen.d| simultaneously. See the documentation of \verb|two_sample_htest|: the function has two arguments called value and group and returns a named list. First create a new function that does the desired tests:
+
+
+<<Replace two_sample_htest.numeric, results='markup', echo=TRUE>>=
+# write a new function:
+new_two_sample_htest <- function(value, group, ...){
+
+  d <- data.frame(value = value, group = group)
+
+  group_levels <- levels(group)
+  x <- subset(d, group %in% group_levels[1], select = "value", drop = TRUE)
+  y <- subset(d, group %in% group_levels[2], select = "value", drop = TRUE)
+
+  ks_test_out <- stats::ks.test(x, y)
+  t_test_out <- stats::t.test(x, y)
+  cohen_d_out <- effsize::cohen.d(x, y, na.rm = TRUE)
+
+  # return p-values of both tests
+  out <- list(p_ks = ks_test_out$p.value,
+              p_t = t_test_out$p.value,
+              cohens_d = cohen_d_out$estimate)
+
+  return(out)
+}
+
+@
+
+Now create a new version of \verb|statistics.numeric| that calculates the median, MAD, mean and sd. See the documentation of \verb|statistics|: the function has one argument called $x$ and the ellipsis $\dots$. The function must return a named list.
+
+<<Modify statistics numeric, results='markup', echo=TRUE>>=
+
+
+new_stats <- function(x, ...){
+
+  statistics_out <- list(Median = median(x, na.rm = TRUE),
+                         MAD = mad(x, na.rm = TRUE),
+                         Mean = mean(x, na.rm = TRUE),
+                         SD = sd(x, na.rm = TRUE))
+
+  return(statistics_out)
+}
+
+@
+
+These new function currently live in the user's workspace. But they must replace the already existing methods. \verb|atable_options| allows to replace already exsting methods globally:
+
+<<replace via atable_options, results='markup', echo=TRUE>>=
+atable_options("statistics.numeric" = new_stats)
+@
+
+Also \verb|atable| has arguments to allow this replacement:
+
+<<replace via atable, , results='markup', echo=TRUE>>=
+the_table <-  atable::atable(atable::test_data,
+                             target_cols = "Numeric",
+                             group_col = "Group",
+                             split_cols = "Split1",
+                             format_to = "Latex",
+                             two_sample_htest.numeric = new_two_sample_htest)
+
+
+@
+
+Then print the results:
+<<Print modify numeric, echo=TRUE, results='asis'>>=
+
+Hmisc::latex(the_table,
+             file = "",
+             title = "",
+             label = "tab:modifynumeric",
+             caption = "Modified atable also calculates the median, MAD,
+             t-test and KS-test.",
+             caption.lot = "Modified atable",
+             rowname = NULL)
+
+@
+
+See table \ref{tab:modifynumeric} for the results. atable now calculates the median, MAD, mean, sd, cohen's d and performs t- and Kolmogorov-Smirnov tests.
+
+All methods listed above my be altered. see also the documentation of \verb|atable| and \verb|atable_options| for a complete list.
+
+\subsection{Add new methods}
+
+Currently the generic \verb|statistics| has no method for class Date (see \verb|methods(statistics)|. We will define one:
+
+
+<<Methods for statistics, results='markup', echo=TRUE>>=
+
+statistics.Date <- function(x, ...){
+
+  out <- list(
+    Min = min(x, na.rm = TRUE),
+    Median = median(x, na.rm = TRUE),
+    Max = max(x, na.rm = TRUE)
+  )
+
+  class(out) <- c("statistics_Date", class(out))
+  # We will need this new class later to specify the format
+
+  return(out)
+}
+
+@
+
+It is not necessary to add this method in atable's namespace (as in section \ref{sec:Replace existing methods}) as R will find the method (only) in the global environment.
+
+We can also alter the formatting of the new method: the minimum and maximum should be next to each other, separated by a semicolon; the median should go below them. See the documentation of \verb|format_statistics|: the function has one argument called $x$ and the ellipsis $\dots$. The function must return a data.frame with names \verb|tag| and \verb|value| with class factor and character respectively.
+
+<<Methods for format, results='markup', echo=TRUE>>=
+format_statistics.statistics_Date <- function(x, ...){
+
+  min_max <- paste0(x$Min, "; ", x$Max)
+  Median <- as.character(x$Median)
+
+
+  out <- data.frame(
+    tag = factor(c("Min Max", "Median"), levels = c("Min Max", "Median")),
+    value = c(min_max, Median),
+    stringsAsFactors = FALSE)
+  # the factor needs levels for the non-alphabetic order
+  return(out)
+}
+
+@
+Note that there is also a default method for \verb|format_statistics|, that just returns the names and values of $x$ as a data.frame, see table \ref{tab:modifynumeric} for the result of the default formatting. Now print the table:
+
+<<Methods for Date print, echo=TRUE, results='asis'>>=
+the_table <-  atable::atable(atable::test_data,
+                             target_cols = "Date",
+                             format_to = "Latex")
+
+Hmisc::latex(the_table,
+             file = "",
+             title = "",
+             label = "tab:addedDate",
+             caption = "atable with added methods for class Date. Now calculates
+             minimum, maximum and median for this class",
+             caption.lot = "atable with added methods for class Date",
+             rowname = NULL)
+@
+
+Table \ref{tab:addedDate} shows the application the new methods for class Date. The statistics and their format are as specified.
+
+Adding new user-defined methods to atable (as described above) can introduce errors to the code. To prevent some of these possible errors, functions that check the results of \verb|statistics| and \verb|format_statistics| etc.\ were implemented in atable; these function are called \verb|check_...|. Also the user is advised to read the documentation of the generic that she/he wants to modify.
+
+
+
+% \section{References}
+% \printbibliography[heading=none]
+\bibliography{atableusage}
+
+\end{document}
