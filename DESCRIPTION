@@ -28,3 +28,5 @@ Suggests:
 	knitr,
 	officer,
 	flextable
+URL: https://github.com/arminstroebel/atable
+BugReports: https://github.com/arminstroebel/atable/issues
