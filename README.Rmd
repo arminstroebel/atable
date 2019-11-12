@@ -1,0 +1,224 @@
+---
+output: github_document
+bibliography: README.bib
+  
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  fig.path = "README-"
+)
+options(width = 100)
+
+```
+
+# atable
+![travis](https://travis-ci.com/aghaynes/atable.svg?branch=master) [![codecov](https://codecov.io/github/aghaynes/atable/branch/master/graphs/badge.svg)](https://codecov.io/github/aghaynes/atable)
+[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/atable)](https://cran.r-project.org/package=atable)
+
+
+The `atable` package supports the analysis and reporting of controlled clinical trials.
+Reporting of clinical trials is such a frequent task that guidelines have been written which recommend certain properties of clinical trial reports (@Moher2010). In particular Item 17a of CONSORT states that "*Trial results are often more clearly displayed in a table rather than in the text*". And Item 15 suggests: "*a table showing baseline demographic and clinical characteristics for each group*". The `atable` package is specifically designed to comply with these two items.
+
+
+## Using `atable` 
+
+Load the package 
+```{r}
+library(atable)
+# remotes::install_github("arminstroebel/atable") # development version
+```
+
+
+We will use the `arthritis` data set to demonstrate the features of `atable`, but as all variables are numeric in `arthritis`, we add some other variable types.
+```{r}
+data(arthritis, package = "multgee")
+arthritis <- within(arthritis, {
+  score <- ordered(y)
+  baselinescore <- ordered(baseline)
+  time <- paste0("Month ", time)
+  sex <- factor(sex, levels = c(1,2), labels = c("female", "male"))
+  trt <- factor(trt, levels = c(1,2), labels = c("placebo", "drug"))
+  date <- as.Date("2016-03-09") + runif(nrow(arthritis), -300, 300)
+  })
+```
+
+
+To create a summary table of sex and age:
+```{r}
+atable_options(format_to = "console") # more on this in a moment
+atable(arthritis, target_cols = c("sex", "age"))
+```
+
+We can also get statistics grouped by some variable (e.g. a treatment indicator):
+```{r}
+atable(arthritis, target_cols = c("sex", "age"), group_col = "trt")
+```
+
+Furthermore, we can split by another variable (e.g. timepoints):
+```{r}
+atable(arthritis, target_cols = c("sex", "age"), group_col = "trt", split_cols = "time")
+
+```
+
+
+The same can be achieved via the formula interface:
+```{r, eval = FALSE}
+atable(sex + age ~ trt | time, arthritis)
+```
+Here, the left hand side represents the variables being summarized. The right hand side gives the variables being used to group and split the variables. The variables used to split come after a `|` character
+
+
+### Output format
+In an earlier code chunk, we set `atable_options(format_to = "Console")`. `atable` is designed to return output in a format optimized for LaTeX, the console, MS Word (via `flextable` and `officer`), HTML or raw (i.e. no formatting). This is for easy use in manuscripts. 
+
+```{r, eval = FALSE}
+form <- sex + age ~ trt
+atable(form, arthritis, format_to = "Latex")   # format to LaTeX
+atable(form, arthritis, format_to = "Console") # format to console
+atable(form, arthritis, format_to = "HTML")    # format to HTML
+atable(form, arthritis, format_to = "Raw")     # no formatting
+atable(form, arthritis, format_to = "Word")    # format to MS Word
+```
+
+
+## Modifying `atable`
+If statistics other than the default ones are required, if it possible to return others by changing the functions `atable` uses to create summary statistics, tests, effect measures and formatting.
+
+Here is an example to calculate median, MAD, mean and SD (requires argument `x` and returns a named list with class `statistics_'class'`:
+```{r}
+new_statistics_numeric <- function(x, ...){
+  statistics_out <- list(Median = median(x, na.rm = TRUE), 
+                         MAD = mad(x, na.rm = TRUE),
+                         Mean = mean(x, na.rm = TRUE),
+                         SD = sd(x, na.rm = TRUE))
+  class(statistics_out) <- c("statistics_numeric", class(statistics_out))
+  # We will need this new class later to specify the format
+  return(statistics_out)
+}
+```
+
+The suitable formatting function:
+```{r}
+new_format_statistics_numeric <- function(x, ...){
+  Median_MAD <- paste(round(c(x$Median, x$MAD), digits = 1), collapse = "; ")
+  Mean_SD <- paste(round(c(x$Mean, x$SD), digits = 1), collapse = "; ")
+  out <- data.frame(tag = factor(c("Median; MAD", "Mean; SD"), 
+                                 levels = c("Median; MAD", "Mean; SD")),
+                    # use levels to retain the order of the rows 
+                    value = c(Median_MAD, Mean_SD),
+                    stringsAsFactors = FALSE)
+  return(out)
+}
+```
+
+And a test function to compute both t-tests and Kolmogorov-Smirnov tests:
+```{r}
+new_two_sample_htest_numeric <- function(value, group, ...){
+  d <- data.frame(value = value, group = group)
+  group_levels <- levels(group)
+  x <- subset(d, group %in% group_levels[1], select = "value", drop = TRUE)
+  y <- subset(d, group %in% group_levels[2], select = "value", drop = TRUE)
+  ks_test_out <- stats::ks.test(x, y)
+  t_test_out <- stats::t.test(x, y)
+  out <- list(p_ks = ks_test_out$p.value,
+              p_t = t_test_out$p.value )
+  return(out)
+}
+```
+
+These can then be passed to `atable` for use in the table:
+```{r}
+atable(sex + age ~ trt | time, arthritis,
+       statistics.numeric = new_statistics_numeric,
+       format_statistics.statistics_numeric = new_format_statistics_numeric,
+       two_sample_htest.numeric = new_two_sample_htest_numeric)
+```
+(See @stroebel2019 for passing methods via `atable_options` and changing `atable`'s namespace)
+
+
+## Extending `atable`
+`atable` only has methods for numeric, factor and ordered variables but it possible to extend `atable`s functionality by defining methods for other classes (e.g. `Date` or `surv`).
+
+Here is an example for `surv` objects, while `vignette("atable_usage", package = "atable")` contains an example with `Date`s.
+
+Define the statistics and testing functions:
+```{r}
+statistics.Surv <- function(x, ...){
+  survfit_object <- survival::survfit(x ~ 1)
+# copy from survival:::print.survfit:
+  out <- survival:::survmean(survfit_object, rmean = "common")
+  return(list(mean_survival_time = out$matrix["*rmean"],
+              SE = out$matrix["*se(rmean)"]))
+}
+
+two_sample_htest.Surv <- function(value, group, ...){
+  survdiff_result <- survival::survdiff(value~group, rho=0)
+  # copy from survival:::print.survdiff:
+  etmp <- survdiff_result$exp
+  df <- (sum(1 * (etmp > 0))) - 1
+  p <- 1 - stats::pchisq(survdiff_result$chisq, df)
+  return(list(p = p,stat = survdiff_result$chisq))
+}
+```
+
+The `ovarian` dataset in the `survival` package has a suitable example...
+```{r}
+library(survival)
+# set classes
+ovarian <- within(survival::ovarian, 
+                  {time_to_event = survival::Surv(futime, fustat)})
+# create the table
+atable(ovarian, target_cols = c("time_to_event"), group_col = "rx")
+```
+
+
+```{r, include=FALSE}
+data(arthritis)
+arthritis <- within(arthritis, {
+  score <- ordered(y)
+  baselinescore <- ordered(baseline)
+  time <- paste0("Month ", time)
+  sex <- factor(sex, levels = c(1,2), labels = c("female", "male"))
+  trt <- factor(trt, levels = c(1,2), labels = c("placebo", "drug"))
+  date <- as.Date("2016-03-09") + runif(nrow(arthritis), -300, 300)
+  })
+arthritis$score2 <- arthritis$score
+arthritis$age2 <- arthritis$age
+class(arthritis$score2) <- c("numeric2", class(arthritis$score2))
+class(arthritis$age2) <- c("numeric2", class(arthritis$age2))
+
+statistics.numeric2 <- function(x, ...){
+  statistics_out <- list(Median = median(as.numeric(x), na.rm = TRUE), 
+                         MAD = mad(as.numeric(x), na.rm = TRUE),
+                         Mean = mean(as.numeric(x), na.rm = TRUE),
+                         SD = sd(as.numeric(x), na.rm = TRUE))
+  class(statistics_out) <- c("statistics_numeric2", class(statistics_out))
+  # We will need this new class later to specify the format
+  return(statistics_out)
+}
+
+two_sample_htest.numeric2 <- function(value, group, ...){
+  d <- data.frame(value = as.numeric(value), group = group)
+  group_levels <- levels(group)
+  x <- subset(d, group %in% group_levels[1], select = "value", drop = TRUE)
+  y <- subset(d, group %in% group_levels[2], select = "value", drop = TRUE)
+  ks_test_out <- stats::ks.test(x, y)
+  t_test_out <- stats::t.test(x, y)
+  out <- list(p_ks = ks_test_out$p.value,
+              p_t = t_test_out$p.value )
+  return(out)
+}
+
+names(arthritis)
+atable(score + score2 + age + age2 ~ trt, arthritis)
+```
+
+
+
+
+
+### References
