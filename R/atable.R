@@ -192,7 +192,9 @@ atable.data.frame <- function(x, target_cols, group_col = NULL, split_cols = NUL
                         Console = "Console",
                         console = "Console",
                         Raw = "Raw",
-                        raw = "Raw")
+                        raw = "Raw",
+                        markdown = "markdown",
+                        md = "markdown")
 
     DD <- x
     stopifnot(is_syntactically_valid_name(colnames(DD)), is.character(target_cols),
