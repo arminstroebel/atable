@@ -45,7 +45,7 @@ arthritis <- within(arthritis, {
 To create a summary table of sex and age:
 
 ``` r
-atable_options(format_to = "console") # more on this in a moment
+atable_options(format_to = "Console") # more on this in a moment
 atable(arthritis, target_cols = c("sex", "age"))
 ##   Group                value    
 ## 1 Observations                  
@@ -298,6 +298,68 @@ atable(ovarian, target_cols = c("time_to_event"), group_col = "rx")
 ## 5      SE                 120 115
 ```
 
+It is also possible to have different statistics for different variables
+of the same class, albeit with a little work. The approach is similar to
+that used for `surv` objects above, but also involves defining a subset
+function (most existing classes already have one, your new one probably
+doesn’t).
+
+First we create a new variable by copying the age variable and add some
+noise:
+
+``` r
+arthritis$noisy_age <- arthritis$age + rnorm(nrow(arthritis), 2)
+class(arthritis$noisy_age) <- c("numeric2", class(arthritis$noisy_age))
+```
+
+Now we need to define the appropriate functions…
+
+``` r
+# statistics function
+statistics.numeric2 <- function(x, ...){
+  statistics_out <- list(Median = median(as.numeric(x), na.rm = TRUE), 
+                         MAD = mad(as.numeric(x), na.rm = TRUE),
+                         Mean = mean(as.numeric(x), na.rm = TRUE),
+                         SD = sd(as.numeric(x), na.rm = TRUE))
+  class(statistics_out) <- c("statistics_numeric2", class(statistics_out))
+  # We will need this new class later to specify the format
+  return(statistics_out)
+}
+# testing function
+two_sample_htest.numeric2 <- function(value, group, ...){
+  d <- data.frame(value = as.numeric(value), group = group)
+  group_levels <- levels(group)
+  x <- subset(d, group %in% group_levels[1], select = "value", drop = TRUE)
+  y <- subset(d, group %in% group_levels[2], select = "value", drop = TRUE)
+  ks_test_out <- stats::ks.test(x, y)
+  t_test_out <- stats::t.test(x, y)
+  out <- list(p_ks = ks_test_out$p.value,
+              p_t = t_test_out$p.value )
+  return(out)
+}
+# subsetting function
+'[.numeric2' <- function(x, i, j, ...){
+  y <- unclass(x)[i, ...]
+  class(y) <- c("numeric2", class(y))
+  y
+}
+
+atable(age + noisy_age ~ trt, arthritis)
+## Warning in stats::ks.test(x, y, alternative = c("two.sided"), ...): p-value will be approximate in
+## the presence of ties
+##    Group                placebo drug    p     stat  Effect Size (CI)     p_ks p_t 
+## 1  Observations                                                                   
+## 2                       447     459                                               
+## 3  age                                                                            
+## 4       Mean (SD)       51 (11) 50 (11) 0.043 0.092 0.058 (-0.072; 0.19)          
+## 5       valid (missing) 447 (0) 459 (0)                                           
+## 6  noisy_age                                                                      
+## 7       Median          56      54                                       0.11 0.49
+## 8       MAD             10      12                                                
+## 9       Mean            53      52                                                
+## 10      SD              11      11
+```
+
 ### References
 
 <div id="refs" class="references">
@@ -314,7 +376,7 @@ Group Randomised Trials.” *BMJ* 340 (mar23 1): c869–c869.
 
 <div id="ref-stroebel2019">
 
-Ströbel, Armin. 2019. “Atable: Create Tables for Clinical Trialreports.”
+Ströbel, Armin. 2019. “atable: Create Tables for Clinical Trialreports.”
 *The R Journal* 11 (1): 137–48.
 <https://journal.r-project.org/archive/2019/RJ-2019-001/RJ-2019-001.pdf>.
 

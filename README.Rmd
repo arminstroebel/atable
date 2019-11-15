@@ -16,8 +16,8 @@ options(width = 100)
 ```
 
 # atable
-![travis](https://travis-ci.com/aghaynes/atable.svg?branch=master) [![codecov](https://codecov.io/github/aghaynes/atable/branch/master/graphs/badge.svg)](https://codecov.io/github/aghaynes/atable)
-[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/atable)](https://cran.r-project.org/package=atable)
+<!-- ![travis](https://travis-ci.com/aghaynes/atable.svg?branch=master) [![codecov](https://codecov.io/github/aghaynes/atable/branch/master/graphs/badge.svg)](https://codecov.io/github/aghaynes/atable) -->
+<!-- [![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/atable)](https://cran.r-project.org/package=atable) -->
 
 
 The `atable` package supports the analysis and reporting of controlled clinical trials.
@@ -49,7 +49,7 @@ arthritis <- within(arthritis, {
 
 To create a summary table of sex and age:
 ```{r}
-atable_options(format_to = "console") # more on this in a moment
+atable_options(format_to = "Console") # more on this in a moment
 atable(arthritis, target_cols = c("sex", "age"))
 ```
 
@@ -176,21 +176,18 @@ atable(ovarian, target_cols = c("time_to_event"), group_col = "rx")
 ```
 
 
-```{r, include=FALSE}
-data(arthritis)
-arthritis <- within(arthritis, {
-  score <- ordered(y)
-  baselinescore <- ordered(baseline)
-  time <- paste0("Month ", time)
-  sex <- factor(sex, levels = c(1,2), labels = c("female", "male"))
-  trt <- factor(trt, levels = c(1,2), labels = c("placebo", "drug"))
-  date <- as.Date("2016-03-09") + runif(nrow(arthritis), -300, 300)
-  })
-arthritis$score2 <- arthritis$score
-arthritis$age2 <- arthritis$age
-class(arthritis$score2) <- c("numeric2", class(arthritis$score2))
-class(arthritis$age2) <- c("numeric2", class(arthritis$age2))
+It is also possible to have different statistics for different variables of the same class, albeit with a little work. The approach is similar to that used for `surv` objects above, but also involves defining a subset function (most existing classes already have one, your new one probably doesn't).
 
+First we create a new variable by copying the age variable and add some noise:
+```{r}
+arthritis$noisy_age <- arthritis$age + rnorm(nrow(arthritis), 2)
+class(arthritis$noisy_age) <- c("numeric2", class(arthritis$noisy_age))
+
+```
+
+Now we need to define the appropriate functions...
+```{r}
+# statistics function
 statistics.numeric2 <- function(x, ...){
   statistics_out <- list(Median = median(as.numeric(x), na.rm = TRUE), 
                          MAD = mad(as.numeric(x), na.rm = TRUE),
@@ -200,7 +197,7 @@ statistics.numeric2 <- function(x, ...){
   # We will need this new class later to specify the format
   return(statistics_out)
 }
-
+# testing function
 two_sample_htest.numeric2 <- function(value, group, ...){
   d <- data.frame(value = as.numeric(value), group = group)
   group_levels <- levels(group)
@@ -212,9 +209,14 @@ two_sample_htest.numeric2 <- function(value, group, ...){
               p_t = t_test_out$p.value )
   return(out)
 }
+# subsetting function
+'[.numeric2' <- function(x, i, j, ...){
+  y <- unclass(x)[i, ...]
+  class(y) <- c("numeric2", class(y))
+  y
+}
 
-names(arthritis)
-atable(score + score2 + age + age2 ~ trt, arthritis)
+atable(age + noisy_age ~ trt, arthritis)
 ```
 
 
