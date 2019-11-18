@@ -13,16 +13,13 @@ two_sample_htest(value, group, ...)
 
 \method{two_sample_htest}{character}(value, group, ...)
 
-\method{two_sample_htest}{factor}(value, group,
-  two_sample_htest.factor = NULL, ...)
+\method{two_sample_htest}{factor}(value, group, two_sample_htest.factor = NULL, ...)
 
 \method{two_sample_htest}{logical}(value, group, ...)
 
-\method{two_sample_htest}{numeric}(value, group,
-  two_sample_htest.numeric = NULL, ...)
+\method{two_sample_htest}{numeric}(value, group, two_sample_htest.numeric = NULL, ...)
 
-\method{two_sample_htest}{ordered}(value, group,
-  two_sample_htest.ordered = NULL, ...)
+\method{two_sample_htest}{ordered}(value, group, two_sample_htest.ordered = NULL, ...)
 }
 \arguments{
 \item{value}{An atomic vector. These values will be tested.}

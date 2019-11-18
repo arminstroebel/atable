@@ -4,9 +4,15 @@
 \alias{indent_data_frame}
 \title{Indents data.frames}
 \usage{
-indent_data_frame(DD, keys, values = setdiff(colnames(DD), keys),
-  character_empty = "", numeric_empty = NA,
-  indent_character = "\\\\quad", colname_indent = "Group")
+indent_data_frame(
+  DD,
+  keys,
+  values = setdiff(colnames(DD), keys),
+  character_empty = "",
+  numeric_empty = NA,
+  indent_character = "\\\\quad",
+  colname_indent = "Group"
+)
 }
 \arguments{
 \item{DD}{A data.frame. Should be sorted by \code{keys} with \code{keys[1]} varying slowest and \code{keys[length(keys)]} varying fastest.}

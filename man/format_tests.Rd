@@ -11,8 +11,7 @@ format_tests(x, ...)
 
 \method{format_tests}{htest}(x, format_tests.htest = NULL, ...)
 
-\method{format_tests}{htest_with_effect_size}(x,
-  format_tests.htest_with_effect_size = NULL, ...)
+\method{format_tests}{htest_with_effect_size}(x, format_tests.htest_with_effect_size = NULL, ...)
 
 \method{format_tests}{default}(x, ...)
 }

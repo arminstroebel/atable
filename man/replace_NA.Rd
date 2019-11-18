@@ -12,8 +12,7 @@
 \usage{
 replace_NA(x, ...)
 
-\method{replace_NA}{character}(x,
-  replacement = atable_options("replace_NA_by"), ...)
+\method{replace_NA}{character}(x, replacement = atable_options("replace_NA_by"), ...)
 
 \method{replace_NA}{factor}(x, ...)
 

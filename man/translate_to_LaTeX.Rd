@@ -16,8 +16,15 @@ translate_to_LaTeX(x, ...)
 
 \method{translate_to_LaTeX}{list}(x, ...)
 
-\method{translate_to_LaTeX}{character}(x, inn = NULL, out = NULL,
-  pb = FALSE, greek = FALSE, na = "", ...)
+\method{translate_to_LaTeX}{character}(
+  x,
+  inn = NULL,
+  out = NULL,
+  pb = FALSE,
+  greek = FALSE,
+  na = "",
+  ...
+)
 
 \method{translate_to_LaTeX}{numeric}(x, ...)
 

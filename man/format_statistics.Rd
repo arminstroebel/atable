@@ -10,11 +10,9 @@
 \usage{
 format_statistics(x, ...)
 
-\method{format_statistics}{statistics_numeric}(x,
-  format_statistics.statistics_numeric = NULL, ...)
+\method{format_statistics}{statistics_numeric}(x, format_statistics.statistics_numeric = NULL, ...)
 
-\method{format_statistics}{statistics_factor}(x,
-  format_statistics.statistics_factor = NULL, ...)
+\method{format_statistics}{statistics_factor}(x, format_statistics.statistics_factor = NULL, ...)
 
 \method{format_statistics}{statistics_count_me}(x, ...)
 

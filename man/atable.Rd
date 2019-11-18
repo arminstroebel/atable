@@ -8,9 +8,16 @@
 \usage{
 atable(x, ...)
 
-\method{atable}{data.frame}(x, target_cols, group_col = NULL,
-  split_cols = NULL, format_to = atable_options("format_to"),
-  drop_levels = TRUE, add_levels_for_NA = FALSE, ...)
+\method{atable}{data.frame}(
+  x,
+  target_cols,
+  group_col = NULL,
+  split_cols = NULL,
+  format_to = atable_options("format_to"),
+  drop_levels = TRUE,
+  add_levels_for_NA = FALSE,
+  ...
+)
 
 \method{atable}{formula}(formula, data, ...)
 }
@@ -191,4 +198,16 @@ atable(atable::test_data,
        statistics.numeric = new_stats,
        format_to = 'Console')
 # Print in Console with format_to = 'Console'.
+
+# Analyse mtcars and add labels and units of via package Hmisc
+mtcars <- within(datasets::mtcars, {gear <- factor(gear)})
+# Add labels and units.
+attr(mtcars$mpg, 'alias') = 'Consumption [Miles (US)/ gallon]'
+Hmisc::label(mtcars$qsec) = 'Quarter Mile Time'
+units(mtcars$qsec) = 's'
+
+# apply atable
+atable::atable(mpg + hp + gear + qsec ~ cyl | vs,
+               mtcars,
+               format_to = 'Console')
 }
