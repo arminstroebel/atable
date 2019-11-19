@@ -13,16 +13,13 @@ multi_sample_htest(value, group, ...)
 
 \method{multi_sample_htest}{logical}(value, group, ...)
 
-\method{multi_sample_htest}{factor}(value, group,
-  multi_sample_htest.factor = NULL, ...)
+\method{multi_sample_htest}{factor}(value, group, multi_sample_htest.factor = NULL, ...)
 
 \method{multi_sample_htest}{character}(value, group, ...)
 
-\method{multi_sample_htest}{ordered}(value, group,
-  multi_sample_htest.ordered = NULL, ...)
+\method{multi_sample_htest}{ordered}(value, group, multi_sample_htest.ordered = NULL, ...)
 
-\method{multi_sample_htest}{numeric}(value, group,
-  multi_sample_htest.numeric = NULL, ...)
+\method{multi_sample_htest}{numeric}(value, group, multi_sample_htest.numeric = NULL, ...)
 }
 \arguments{
 \item{value}{An atomic vector.}

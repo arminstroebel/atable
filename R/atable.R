@@ -168,7 +168,18 @@
 #'        statistics.numeric = new_stats,
 #'        format_to = 'Console')
 #' # Print in Console with format_to = 'Console'.
-
+#'
+#' # Analyse mtcars and add labels and units of via package Hmisc
+#' mtcars <- within(datasets::mtcars, {gear <- factor(gear)})
+#' # Add labels and units.
+#' attr(mtcars$mpg, 'alias') = 'Consumption [Miles (US)/ gallon]'
+#' Hmisc::label(mtcars$qsec) = 'Quarter Mile Time'
+#' units(mtcars$qsec) = 's'
+#'
+#' # apply atable
+#' atable::atable(mpg + hp + gear + qsec ~ cyl | vs,
+#'                mtcars,
+#'                format_to = 'Console')
 
 #' @export
 atable <- function(x, ...) {
@@ -182,30 +193,27 @@ atable.data.frame <- function(x, target_cols, group_col = NULL, split_cols = NUL
     format_to = atable_options("format_to"), drop_levels = TRUE, add_levels_for_NA = FALSE,
     ...) {
 
-    format_to <- switch(format_to,
-                        Latex = "Latex",
-                        latex = "Latex",
-                        Word = "Word",
-                        word = "Word",
-                        HTML = "HTML",
-                        html = "HTML",
-                        Console = "Console",
-                        console = "Console",
-                        Raw = "Raw",
-                        raw = "Raw",
-                        markdown = "markdown",
-                        md = "markdown")
+    format_to <- switch(format_to, Latex = "Latex", latex = "Latex", Word = "Word",
+        word = "Word", HTML = "HTML", html = "HTML", Console = "Console", console = "Console",
+        Raw = "Raw", raw = "Raw")
 
     DD <- x
     stopifnot(is_syntactically_valid_name(colnames(DD)), is.character(target_cols),
-        is.character(format_to), length(format_to) == 1, length(target_cols) > 0, all(target_cols %in% colnames(DD)),
-        is.null(group_col) || (is.character(group_col) && length(group_col) == 1 && (group_col %in% colnames(DD)) ),
-        is.null(split_cols) || (is.character(split_cols) && all(split_cols %in% colnames(DD))),
-        anyDuplicated(c(target_cols, group_col, split_cols)) == 0)
+        is.character(format_to), length(format_to) == 1, length(target_cols) > 0,
+        all(target_cols %in% colnames(DD)), is.null(group_col) || (is.character(group_col) &&
+            length(group_col) == 1 && (group_col %in% colnames(DD))), is.null(split_cols) ||
+            (is.character(split_cols) && all(split_cols %in% colnames(DD))), anyDuplicated(c(target_cols,
+            group_col, split_cols)) == 0)
 
 
 
     DD <- DD[c(target_cols, split_cols, group_col)]  # only these columns are relevant
+
+    Alias_mapping <- create_alias_mapping(DD[c(target_cols, split_cols)])
+    # I create Alias_mapping once here and pass it down to other functions, because
+    # subsetting rows in DD removes attributes.  See Hmisc getAnywhere('[.labelled')
+    # for a workaround. But I do not know all classes and hence cannot write [
+    # methods for them.
 
     # I cast group_col and split_cols to factor that allows more flexibility for the
     # input than only factor: grouping and splitting by character, numeric and
@@ -257,18 +265,18 @@ atable.data.frame <- function(x, target_cols, group_col = NULL, split_cols = NUL
     result <- if (is.null(group_col)) {
         if (is.null(split_cols)) {
             atable_unsplitted_ungrouped(DD = DD, target_cols = target_cols, format_to = format_to,
-                ...)
+                Alias_mapping, ...)
         } else {
             atable_splitted_ungrouped(DD = DD, target_cols = target_cols, split_cols = split_cols,
-                format_to = format_to, ...)
+                Alias_mapping, format_to = format_to, ...)
         }
     } else {
         if (is.null(split_cols)) {
             atable_unsplitted_grouped(DD = DD, target_cols = target_cols, group_col = group_col,
-                split_cols = split_cols, format_to = format_to, ...)
+                Alias_mapping, split_cols = split_cols, format_to = format_to, ...)
         } else {
             atable_splitted_grouped(DD = DD, target_cols = target_cols, group_col = group_col,
-                split_cols = split_cols, format_to = format_to, ...)
+                split_cols = split_cols, format_to = format_to, Alias_mapping, ...)
         }
     }
 

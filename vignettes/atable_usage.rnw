@@ -116,13 +116,18 @@ For dose 0.5 the p-value is 0.055, just barely missed significance. For dose 2 t
 
 \subsection{Apply atable to datasets::mtcars}
 
-datasets::mtcars comprises fuel consumption and 10 aspects of automobile design and performance for 32 automobiles. We use atable to compare Miles per gallon (mpg), horse power (hp), number of forward gears (gear) and $\frac{1}{4}$ mile time (qsec) between number of cylinders (cyl) separately for V-shaped engines (vs) and non-V-shaped engines. See table \ref{tab:mtcarsatable} for the results.
+datasets::mtcars comprises fuel consumption and 10 aspects of automobile design and performance for 32 automobiles. We use atable to compare Miles per gallon (mpg), horse power (hp), number of forward gears (gear) and $\frac{1}{4}$ mile time (qsec) between number of cylinders (cyl) separately for V-shaped engines (vs) and non-V-shaped engines. See table \ref{tab:mtcarsatable} for the results. We can also add labels and units via R's attributes and also via Hmisc's label.
 
 <<mtcars atable, echo=TRUE, results='asis'>>=
 
 # all columns of mtcars are numeric, although some are
 # better represented as factors
 mtcars <- within(datasets::mtcars, {gear <- factor(gear)})
+
+# Add labels and units.
+attr(mtcars$mpg, "alias") = "Consumption [Miles (US)/ gallon]"
+Hmisc::label(mtcars$qsec) = "Quarter Mile Time"
+units(mtcars$qsec) = "s"
 
 # apply atable
 the_table <- atable::atable(mpg + hp + gear + qsec ~ cyl | vs,
@@ -173,7 +178,7 @@ unformatted$statistics_result$mpg[[2]]$sd
 Now single values are accessible unformatted and can be printed by \verb|\Sexpr{}|. For example: The mean miles per gallon for V-shaped engines with 6 cylinder is \Sexpr{unformatted$statistics_result$mpg[[2]]$mean} with a standard deviation of \Sexpr{unformatted$statistics_result$mpg[[2]]$sd}.
 
 \subsection{Language localisation}
-Sometimes reports in languages other than English are needed. atable's output can be localised. We will set the language to German via the settings package \cite{settings2015}:
+Sometimes reports in languages other than English are needed. atable's output can be localised. We will set the language to German via the settings package \cite{settings2015}. Note that we use the same dataset mtcars as above, which already has labels in english.
 
 <<Localisation, echo=TRUE, results='asis'>>=
 
@@ -181,14 +186,21 @@ Sometimes reports in languages other than English are needed. atable's output ca
 atable::atable_options(labels_TRUE_FALSE = c("Ja", "Nein"),
                        labels_Mean_SD = "Mittelwert (SD)" ,
                        labels_valid_missing = "Ok (fehlend)",
-                       colname_for_observations = "Anzahl",
+                       colname_for_observations = "N",
                        colname_for_value = "Wert",
-                       colname_for_group = "Gruppe",
+                       colname_for_group = "",
                        replace_NA_by = "fehlend")
 
+attr(mtcars$mpg, "alias German") = "Verbrauch [Miles (US)/ gallon]"
+attr(mtcars$hp, "alias German") = "PS"
+
+# Tell atable to look for attribute "alias German"
+atable_options('get_alias.default' = function(x, ...)
+  {attr(x, "alias German", exact = TRUE)})
+
 # apply atable
-the_table <- atable::atable(atable::test_data,
-             target_cols = c("Logical", "Numeric", "Factor", "Ordered"))
+the_table <- atable::atable(mtcars,
+             target_cols = c("mpg", "hp"))
 
 # reset all options to default
 atable_options_reset()
@@ -199,8 +211,8 @@ Hmisc::latex(the_table,
              title = "",
              label = "tab:Localisation",
              caption = "Localised atable. All identifiers produced by atable are
-                        now translated to german; names of variables and factor
-                        labels supplied in the data.frame remain unchanged.",
+                        now translated to german; also the user can add aliasees
+                        to all variables for localisation.",
              caption.lot = "Localised atable",
              rowname = NULL)
 

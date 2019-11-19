@@ -274,15 +274,16 @@ format_statistics_caller <- function(x, cols, ...) {
     return(out3)
 }
 
-arrange_statistics <- function(formated_statistics_result, split_cols, format_to) {
+arrange_statistics <- function(formated_statistics_result, split_cols, format_to,
+    Alias_mapping) {
     formated_statistics_result <- replace_NA(formated_statistics_result)
 
-    return(arrange_helper(formated_statistics_result, split_cols, format_to))
+    return(arrange_helper(formated_statistics_result, split_cols, format_to, Alias_mapping))
 }
 
 
 arrange_statistics_and_tests <- function(formated_statistics_result, formated_tests_result,
-    group_col, split_cols, format_to) {
+    group_col, split_cols, format_to, Alias_mapping) {
     formated_statistics_result <- replace_NA(formated_statistics_result)
 
 
@@ -347,10 +348,16 @@ arrange_statistics_and_tests <- function(formated_statistics_result, formated_te
         })
 
 
-    return(arrange_helper(tabr, split_cols, format_to))
+    return(arrange_helper(tabr, split_cols, format_to, Alias_mapping))
 }
 
-arrange_helper <- function(tab, split_cols, format_to) {
+arrange_helper <- function(tab, split_cols, format_to, Alias_mapping) {
+
+    # map to aliases
+    tab[[atable_options("colname_for_variable")]] <- plyr::mapvalues(x = tab[[atable_options("colname_for_variable")]],
+        from = Alias_mapping$old, to = Alias_mapping$new, warn_missing = FALSE)
+
+
     switch(format_to, Word = {
         tab <- indent_data_frame(tab, keys = c(split_cols, atable_options("colname_for_variable"),
             "tag"), indent_character = "    ")
@@ -385,11 +392,11 @@ arrange_helper <- function(tab, split_cols, format_to) {
 }
 
 #' @export
-print.atable <- function(x, ...)print(as.data.frame(x), right = FALSE, ...)
+print.atable <- function(x, ...) print(as.data.frame(x), right = FALSE, ...)
 
 
 atable_splitted_grouped <- function(DD, target_cols, group_col, split_cols, format_to,
-    ...) {
+    Alias_mapping, ...) {
 
     Observation_and_target_cols <- c(atable_options("colname_for_observations"),
         target_cols)
@@ -413,14 +420,13 @@ atable_splitted_grouped <- function(DD, target_cols, group_col, split_cols, form
         cols = target_cols, ...)
 
 
-
     atable_result <- arrange_statistics_and_tests(formated_statistics_result, formated_tests_result,
-        group_col, split_cols, format_to)
+        group_col, split_cols, format_to, Alias_mapping)
     return(atable_result)
 }
 
 atable_unsplitted_grouped <- function(DD, target_cols, group_col, split_cols, format_to,
-    ...) {
+    Alias_mapping, ...) {
 
     Observation_and_target_cols <- c(atable_options("colname_for_observations"),
         target_cols)
@@ -442,13 +448,13 @@ atable_unsplitted_grouped <- function(DD, target_cols, group_col, split_cols, fo
     formated_tests_result <- format_tests_caller(tests_result, cols = target_cols,
         ...)
 
-
     atable_result <- arrange_statistics_and_tests(formated_statistics_result, formated_tests_result,
-        group_col, split_cols, format_to)
+        group_col, split_cols, format_to, Alias_mapping)
     return(atable_result)
 }
 
-atable_splitted_ungrouped <- function(DD, target_cols, split_cols, format_to, ...) {
+atable_splitted_ungrouped <- function(DD, target_cols, split_cols, format_to, Alias_mapping,
+    ...) {
 
     Observation_and_target_cols <- c(atable_options("colname_for_observations"),
         target_cols)
@@ -464,14 +470,15 @@ atable_splitted_ungrouped <- function(DD, target_cols, split_cols, format_to, ..
     formated_statistics_result <- plyr::ddply(statistics_result, split_cols, format_statistics_caller,
         cols = Observation_and_target_cols, ...)
 
-
-    atable_result <- arrange_statistics(formated_statistics_result, split_cols, format_to)
+    atable_result <- arrange_statistics(formated_statistics_result, split_cols, format_to,
+        Alias_mapping)
 
 
     return(atable_result)
 }
 
-atable_unsplitted_ungrouped <- function(DD, target_cols, format_to, ...) {
+atable_unsplitted_ungrouped <- function(DD, target_cols, format_to, Alias_mapping,
+    ...) {
 
     Observation_and_target_cols <- c(atable_options("colname_for_observations"),
         target_cols)
@@ -491,6 +498,7 @@ atable_unsplitted_ungrouped <- function(DD, target_cols, format_to, ...) {
 
     split_cols <- NULL  # i do not want to write another helper function.
     # Just use arrange_statistics, which uses split_cols.
-    atable_result <- arrange_statistics(formated_statistics_result, split_cols, format_to)
+    atable_result <- arrange_statistics(formated_statistics_result, split_cols, format_to,
+        Alias_mapping)
     return(atable_result)
 }

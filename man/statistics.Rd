@@ -16,8 +16,7 @@ statistics(x, ...)
 
 \method{statistics}{factor}(x, statistics.factor = NULL, ...)
 
-\method{statistics}{logical}(x,
-  labels_TRUE_FALSE = atable_options("labels_TRUE_FALSE"), ...)
+\method{statistics}{logical}(x, labels_TRUE_FALSE = atable_options("labels_TRUE_FALSE"), ...)
 
 \method{statistics}{character}(x, ...)
 
