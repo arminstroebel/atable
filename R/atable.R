@@ -196,7 +196,7 @@ atable.data.frame <- function(x, target_cols, group_col = NULL, split_cols = NUL
 
     format_to <- switch(format_to, Latex = "Latex", latex = "Latex", Word = "Word",
         word = "Word", HTML = "HTML", html = "HTML", Console = "Console", console = "Console",
-        Raw = "Raw", raw = "Raw", md = "markdown", markdown = "markdown")
+        Raw = "Raw", raw = "Raw", md = "markdown", markdown = "markdown", "Console")
 
     DD <- x
     stopifnot(is_syntactically_valid_name(colnames(DD)), is.character(target_cols),
