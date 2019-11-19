@@ -2,7 +2,9 @@
 title: "Modifying `atable`"
 author: "Alan Haynes"
 date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
+output: 
+  rmarkdown::html_vignette:
+        toc: true
 vignette: >
   %\VignetteIndexEntry{Modifying `atable`}
   %\VignetteEngine{knitr::rmarkdown}
@@ -35,11 +37,14 @@ The `atable` default settings produce the following:
 knitr::kable(atable(vs + cyl + hp + disp ~ am, mtcars))
 ```
 
+
 There are in general three approaches to modifying `atable`'s default settings:
 
 1. pass a function to the `atable` function as an option. This affects only a single call to `atable`.
 2. pass a function to `atable_options`. This affects all calls to `atable` during the session. These settings can be overriden by 1
 3. replace a method in `atable`s namespace. This can be done with any package, but requires more code and is not easily reverted.
+
+## Changing the statistical functions
 
 In order to use any of these methods, we need suitable functions. Perhaps it is desirable to have t-tests and Kolmogorov-Smirnoff tests simultaneously. When defining test functions, the function has to have arguments `value`, `group` and `...` and return a named list.
 
@@ -67,6 +72,7 @@ new_statistics_numeric <- function(x, ...){
                          SD = sd(x, na.rm = TRUE))
   class(statistics_out) <- c("statistics_numeric", class(statistics_out))
   # We will need this new class later to specify the format
+  return(statistics_out)
 }
 ```
 
@@ -86,7 +92,8 @@ new_format_statistics_numeric <- function(x, ...){
 }
 ```
 
-To use these three functions, we need to tell `atable` about them, using one of the three methods mentioned above. We will assign the testing function to `atable`s namespace.
+
+To use these three functions, we need to tell `atable` about them, using one of the three methods mentioned above. We will assign the testing function to `atable`s namespace. `two_sample_htest.numeric` will be used for two sample tests until R is restarted.
 
 ```{r}
 utils::assignInNamespace(x = "two_sample_htest.numeric",
@@ -94,12 +101,62 @@ utils::assignInNamespace(x = "two_sample_htest.numeric",
                          ns = "atable")
 ```
 
+`atable_options` can be used to specify a new function instead by referring to the thing to be replaced, in this case `statistics.numeric`. The `new_statistics_numeric` function will be used until e.g. R is restarted or `atable_options_reset` is used to restore the defaults, or it is replaced by something else.
+
+```{r}
+atable_options("statistics.numeric" = new_statistics_numeric)
+```
+
+The third option is to refer to the function in the `atable` call...
+
+```{r}
+knitr::kable(atable(hp + disp ~ am, mtcars, 
+                    format_statistics.statistics_numeric = new_format_statistics_numeric))
+```
+
+
+Options that have been set via `atable_options` can be restored to there defaults via
+
+```{r}
+atable_options_reset()
+```
 
 
 
+## Labels 
 
+`atable` can use Hmisc::label and Hmisc::unit, or an `alias` attribute to store labels. By default `labelled` objects (those with labels from Hmisc) are formatted with the label followed by the units in square brackets.
 
+```{r}
+require(Hmisc)
+label(mtcars$hp) <- "Horse power"
+units(mtcars$hp) <- "hp"
+knitr::kable(atable(hp + disp ~ 1, mtcars))
+```
 
+Analagous to elsewhere, the `get_alias` methods are responsible for handling how the label is composed. If there is no `alias` attribute and the class is not `labelled`, then the variable name will be used. We can use round brackets instead of square ones by replacing the `get_alias.labelled` method...
+
+```{r}
+get_alias.labelled <- function(x, ...){
+    out <- attr(x, "label", exact = TRUE)
+    Units <- attr(x, "units", exact = TRUE)
+    out = if(!is.null(Units)){
+      paste0(out, " (", Units, ")")}else{out}
+    return(out)
+}
+atable_options("get_alias.labelled" = get_alias.labelled)
+knitr::kable(atable(hp + disp ~ 1, mtcars))
+```
+
+If we wanted to use a `label` attribute rather than `alias`, we could change the `get_alias.default` function
+```{r}
+attr(mtcars$disp, "label") <- "Displacement"
+get_alias.default <- function(x, ...){
+    attr(x, "label", exact = TRUE)
+}
+atable_options("get_alias.default" = get_alias.default)
+knitr::kable(atable(hp + disp ~ 1, mtcars))
+```
 
 
 
@@ -134,4 +191,11 @@ atable_options("format_p_values")(0.0012)
 atable_options("format_p_values")(0.0009)
 ```
 
+The changes are then carried over to the table itself too. 
+
+```{r}
+knitr::kable(atable(vs + cyl + hp + disp ~ am, mtcars))
+```
+
+It should be noted that as there is no additional formatting function for the test results, so the default method is being used for the new. We would have to assign a class to the object returned from `new_two_sample_htest_numeric` and define a suitable test formatting function.
 

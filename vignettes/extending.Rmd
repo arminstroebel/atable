@@ -176,8 +176,9 @@ format_statistics.statistics_numeric2 <- function(x, ...){
                     stringsAsFactors = FALSE)
   return(out)
 }
+
 a <- atable(vs + cyl + hp + disp ~ am, mtcars)
-knitr::kable(a, )
+knitr::kable(a)
 # a
 ```
 
