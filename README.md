@@ -3,9 +3,10 @@
 
 # atable
 
-![travis](https://travis-ci.com/aghaynes/atable.svg?branch=master)
-[![codecov](https://codecov.io/github/aghaynes/atable/branch/master/graphs/badge.svg)](https://codecov.io/github/aghaynes/atable)
+![travis](https://travis-ci.com/arminstroebel/atable.svg?branch=master)
+[![codecov](https://codecov.io/github/arminstroebel/atable/branch/master/graphs/badge.svg)](https://codecov.io/github/arminstroebel/atable)
 [![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/atable)](https://cran.r-project.org/package=atable)
+[![](https://img.shields.io/badge/github%20version-0.1.3-blue.svg)](https://github.com/arminstroebel/atable)
 
 The `atable` package supports the analysis and reporting of controlled
 clinical trials. Reporting of clinical trials is such a frequent task
@@ -285,6 +286,7 @@ The `ovarian` dataset in the `survival` package has a suitable example…
 
 ``` r
 library(survival)
+## Warning: package 'survival' was built under R version 3.4.4
 # set classes
 ovarian <- within(survival::ovarian, 
                   {time_to_event = survival::Surv(futime, fustat)})
@@ -293,7 +295,7 @@ atable(ovarian, target_cols = c("time_to_event"), group_col = "rx")
 ##   Group                   1   2   p   stat
 ## 1 Observations                            
 ## 2                         13  13          
-## 3 time_to_event                           
+## 3 time to event                           
 ## 4      mean_survival_time 650 889 0.3 1.1 
 ## 5      SE                 120 115
 ```
@@ -347,16 +349,16 @@ two_sample_htest.numeric2 <- function(value, group, ...){
 atable(age + noisy_age ~ trt, arthritis)
 ## Warning in stats::ks.test(x, y, alternative = c("two.sided"), ...): p-value will be approximate in
 ## the presence of ties
-##    Group                placebo drug    p     stat  Effect Size (CI)     p_ks p_t 
-## 1  Observations                                                                   
-## 2                       447     459                                               
-## 3  age                                                                            
-## 4       Mean (SD)       51 (11) 50 (11) 0.043 0.092 0.058 (-0.072; 0.19)          
-## 5       valid (missing) 447 (0) 459 (0)                                           
-## 6  noisy_age                                                                      
-## 7       Median          56      54                                       0.11 0.49
-## 8       MAD             10      12                                                
-## 9       Mean            53      52                                                
+##    Group                placebo drug    p     stat  Effect Size (CI)     p_ks  p_t 
+## 1  Observations                                                                    
+## 2                       447     459                                                
+## 3  age                                                                             
+## 4       Mean (SD)       51 (11) 50 (11) 0.043 0.092 0.058 (-0.072; 0.19)           
+## 5       valid (missing) 447 (0) 459 (0)                                            
+## 6  noisy age                                                                       
+## 7       Median          57      55                                       0.011 0.36
+## 8       MAD             10      12                                                 
+## 9       Mean            53      52                                                 
 ## 10      SD              11      11
 ```
 
@@ -376,8 +378,8 @@ Group Randomised Trials.” *BMJ* 340 (mar23 1): c869–c869.
 
 <div id="ref-stroebel2019">
 
-Ströbel, Armin. 2019. “atable: Create Tables for Clinical Trialreports.”
-*The R Journal* 11 (1): 137–48.
+Ströbel, Armin. 2019. “atable: Create Tables for Clinical Trial
+Reports.” *The R Journal* 11 (1): 137–48.
 <https://journal.r-project.org/archive/2019/RJ-2019-001/RJ-2019-001.pdf>.
 
 </div>

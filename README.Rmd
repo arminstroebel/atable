@@ -16,8 +16,9 @@ options(width = 100)
 ```
 
 # atable
-<!-- ![travis](https://travis-ci.com/aghaynes/atable.svg?branch=master) [![codecov](https://codecov.io/github/aghaynes/atable/branch/master/graphs/badge.svg)](https://codecov.io/github/aghaynes/atable) -->
-<!-- [![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/atable)](https://cran.r-project.org/package=atable) -->
+ ![travis](https://travis-ci.com/arminstroebel/atable.svg?branch=master) [![codecov](https://codecov.io/github/arminstroebel/atable/branch/master/graphs/badge.svg)](https://codecov.io/github/arminstroebel/atable) 
+[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/atable)](https://cran.r-project.org/package=atable)
+`r badger::badge_custom("github version", installed.packages()["atable", "Version"], "blue", "https://github.com/arminstroebel/atable")`
 
 
 The `atable` package supports the analysis and reporting of controlled clinical trials.
