@@ -1,7 +1,7 @@
 Package: atable
 Type: Package
 Title: Create Tables for Reporting Clinical Trials
-Version: 0.1.2
+Version: 0.1.3
 Author: Armin Ströbel [aut, cre] (<https://orcid.org/0000-0002-6873-5332>)
 Maintainer: Armin Ströbel <arminstroebel@web.de>
 Authors@R: person("Armin", "Ströbel", email = "arminstroebel@web.de", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-6873-5332"))
@@ -9,7 +9,7 @@ Description: Create Tables for Reporting Clinical Trials.
 	Calculates descriptive statistics and hypothesis tests, 
 	arranges the results in a table ready for reporting with LaTeX, HTML or Word.
 License: GPL-3
-Depends: R (>= 3.5.0)
+Depends: R (>= 3.4.2)
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.1.1

@@ -31,7 +31,8 @@
 #' Default is \code{NULL}, meaning that no splitting is done.
 #'
 #' @param format_to A character vector of length 1. Specifies the format of the output of \code{atable}.
-#'  Possible values are \code{'Latex'}, \code{'Word'}, \code{'Raw'}, \code{'HTML'}, \code{'Console'}.
+#'  Possible values are \code{'Latex'}, \code{'Word'}, \code{'Raw'}, \code{'HTML'}, \code{'Console'},
+#'  \code{'markdown'}, \code{'md'}.
 #'  Default is defined in \code{\link{atable_options}}.
 #'
 #' @param drop_levels A logical. If \code{TRUE} then \code{\link[base]{droplevels}} is called on \code{group_col}
@@ -195,7 +196,8 @@ atable.data.frame <- function(x, target_cols, group_col = NULL, split_cols = NUL
 
     format_to <- switch(format_to, Latex = "Latex", latex = "Latex", Word = "Word",
         word = "Word", HTML = "HTML", html = "HTML", Console = "Console", console = "Console",
-        Raw = "Raw", raw = "Raw")
+        Raw = "Raw", raw = "Raw", md = "markdown", markdown = "markdown", "Console")
+
 
     DD <- x
     stopifnot(is_syntactically_valid_name(colnames(DD)), is.character(target_cols),

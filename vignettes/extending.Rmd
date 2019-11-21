@@ -1,0 +1,187 @@
+---
+title: "Extending `atable`"
+author: "Alan Haynes"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Extending atable}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+options(knitr.kable.NA = '')
+options(width = 100)
+library(atable)
+```
+
+`atable` has been designed for flexibility in mind. If you don't like the defaults, you can define your own summary statistics, tests and effect measures. You can even define your own methods for classes not supported natively. This vignette gives some details and examples on how to go about these tasks.
+
+
+In this vignette we will use the `mtcars` dataset as an example. Load it and prepare factors and other variables. We also set the format_to option to `md` (markdown) for nicer printing in the vignette.
+```{r}
+data(mtcars)
+# factors
+mtcars$am <- factor(mtcars$am, c(0, 1), c("Automatic", "Manual"))
+mtcars$vs <- factor(mtcars$vs, c(0, 1), c("V-shaped", "straight"))
+# ordered
+mtcars$cyl <- ordered(mtcars$cyl)
+# set format_to
+atable_options(format_to = "md")
+```
+The `atable` default settings produce the following:
+```{r, results='asis'}
+knitr::kable(atable(vs + cyl + hp + disp ~ am, mtcars))
+```
+
+## Methods for other classes
+
+`atable` only support numeric, factor and ordered classes by default. If you want to use unsupported classes, e.g. `Date` or `surv`, you can define methods for them reasonably easily. 
+
+### Example methods for `Date`s
+
+There are no methods for `Date`s in `atable`. We can define them easily though. If we want the minimum, median and maximum dates, we could define the statistics function as follows. The class of the output here is important - it is used to choose the appropriate formatting function.
+
+```{r}
+# statistics function
+statistics.Date <- function(x, ...){
+  out <- list(min = min(x, na.rm = TRUE),
+              med = median(x, na.rm = TRUE),
+              max = max(x, na.rm = TRUE))
+  class(out) <- c("statistics_date", class(out))
+  out
+}
+```
+
+The suitable formatting function for that might be the following to put minimum and maximum on one line followed by the median on the next. The factor is required to avoid reordering the rows.
+
+```{r}
+format_statistics.statistics_date <- function(x, ...){
+  z <- c("Min ; Max", "Median")
+  out <- data.frame(tag = factor(z, z),
+                    value = c(paste(x$min, x$max, sep = " ; "),
+                              as.character(x$med)),
+                    stringsAsFactors = FALSE)
+  return(out)
+}
+```
+
+```{r, results='asis'}
+# add a date variable to mtcars
+mtcars$date <- as.Date(runif(nrow(mtcars), 0, 365*10), "1990-01-01")
+knitr::kable(atable(mtcars, "date"))
+```
+
+If comparing two or more groups, then suitable `two_sample_htest` and `multi_sample_htest` functions should also be defined. 
+
+### Example methods for `surv` objects
+
+Probably more useful than the `Date` methods would be `surv` objects, as defined by the `survival` package.
+
+First we add a `surv` object to `mtcars` by creating an observation time point approximately 10 years after the date we defined previously. We then calculate the time between these two time points and define an indicator whether an event occured, in this case the car no longer being road-worthy.
+
+```{r}
+library(survival)
+# add some survival data (use 'date' as the timepoint)
+mtcars$date2 <- mtcars$date + round(rnorm(nrow(mtcars), 10, 4)) # end date
+mtcars$time <- as.numeric(mtcars$date2 - mtcars$date) # time
+mtcars$not_road_worthy <- rbinom(nrow(mtcars), 1, .2) # 'survived'?
+mtcars$surv <- with(mtcars, Surv(time, not_road_worthy))
+```
+
+Now we need the appropriate methods for `atable`. Mean survival time is a common choice for time-to-event analyses. Similarly, the Mantel-Haenszel test is a used to compare two curves. 
+
+```{r}
+# statistics function
+statistics.Surv <- function(x, ...){
+  survfit_object <- survival::survfit(x ~ 1)
+  # copied from survival::print.survfit
+  out <- survival:::survmean(survfit_object, rmean = "common")
+  return(list(mean_survival_time = out$matrix["*rmean"], 
+              SE = out$matrix["*se(rmean)"]))
+}
+# testing function
+two_sample_htest.Surv <- function(value, group, ...){
+  survdiff_result <- survival::survdiff(value~group, rho=0)
+  # copy from survival::print.survdiff
+  etmp <- survdiff_result$exp
+  df <- (sum(1 * (etmp > 0))) - 1
+  p <- 1 - stats::pchisq(survdiff_result$chisq, df)
+  return(list(p = p,stat = survdiff_result$chisq))
+}
+```
+
+We can then use them with the variables we defined in mtcars...
+```{r, results='asis'}
+knitr::kable(atable(surv ~ am, mtcars))
+```
+
+An appropriate formatting function could be defined as above for `Date`s.
+
+
+
+
+## Different statistics for variables of a single class
+
+In the `mtcars` example, suppose we want to summarize `hp` by mean and SD and `disp` by median and quartiles. Mean and SD are the default statistics for numeric variables in `atable` so we only have to worry about `disp`. To accomplish this, we can use the same method as we used above for `Date` variables - we will define new functions for a new class. We will assign the new class, which we will call `numeric2`, to `disp` and define new functions to handle it.
+
+```{r}
+# add numeric2 to the class of disp
+class(mtcars$disp) <- c("numeric2", class(mtcars$disp))
+# subsetting function for numeric2 class
+'[.numeric2' <- function(x, i, j, ...){
+  y <- unclass(x)[i, ...]
+  class(y) <- c("numeric2", class(y))
+  y
+}
+```
+The subsetting function is used to retain the class of the variable (otherwise it reverts to a numeric in this case). We didn't need to do this above as the relevant function for the `Date` and `surv` classes already exist.
+
+
+
+Next we define functions to calculate the statistics that we want to use. These both have to return named lists.
+```{r}
+# statistics function
+statistics.numeric2 <- function(x, ...){
+  statistics_out <- list(Median = median(x, na.rm = TRUE), 
+                         p25 = quantile(x, 0.25, na.rm = TRUE),
+                         p75 = quantile(x, 0.75, na.rm = TRUE))
+  class(statistics_out) <- c("statistics_numeric2", class(statistics_out))
+  # We will need this new class later to specify the format
+  return(statistics_out)
+}
+# testing function
+two_sample_htest.numeric2 <- function(value, group, ...){
+  d <- data.frame(value = value, group = group)
+  test_out <- stats::wilcox.test(value ~ group, d)
+  return(test_out)
+}
+```
+Now we can test to see if our new class has been identified and used correctly.
+```{r, results='asis'}
+knitr::kable(atable(vs + cyl + hp + disp ~ am, mtcars))
+```
+
+
+We probably don't want to have the quartiles beneath the median so we can also define a formatting function. The `format_statistics` function should return a dataframe with variable tag (as a factor to retain ordering) and value (most likely a string). The class is no longer `numeric2` but `statistics_numeric2` as defined in the `statistics.numeric2` function.
+
+```{r, results='asis'}
+format_statistics.statistics_numeric2 <- function(x, ...){
+  out <- data.frame(tag = factor(c("Median [Quartiles]")),
+                    value = sprintf("%2.1f [%2.1f ; %2.1f]", x$Median, x$p25, x$p75),
+                    stringsAsFactors = FALSE)
+  return(out)
+}
+
+a <- atable(vs + cyl + hp + disp ~ am, mtcars)
+knitr::kable(a)
+# a
+```
+
+
+
+

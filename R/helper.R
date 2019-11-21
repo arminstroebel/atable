@@ -381,7 +381,12 @@ arrange_helper <- function(tab, split_cols, format_to, Alias_mapping) {
         class(tab) <- c("atable", class(tab))
 
         return(tab)
-    }, {
+    }, markdown = {
+        tab <- indent_data_frame(tab, keys = c(split_cols, atable_options("colname_for_variable"),
+                                               "tag"), indent_character = "&nbsp;&nbsp;&nbsp;&nbsp;")
+        return(tab)
+    },
+    {
         stop("format_to ", format_to, " unknown.")
     })
 }
