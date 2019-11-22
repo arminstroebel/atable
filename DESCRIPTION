@@ -10,7 +10,7 @@ Authors@R: c(person("Armin", "Ströbel", email = "arminstroebel@web.de", role = 
 Description: Create Tables for Reporting Clinical Trials.
   Calculates descriptive statistics and hypothesis tests, 
   arranges the results in a table ready for reporting with LaTeX, HTML or Word.
-License: GPL-3
+License:  file LICENSE
 Depends: R (>= 3.5)
 Encoding: UTF-8
 LazyData: true
@@ -24,7 +24,8 @@ Imports:
   Hmisc (>= 4.1),
   settings (>= 0.2.4),
 	DescTools (>= 0.99.24),
-	effsize (>= 0.7.1)
+	effsize (>= 0.7.1),
+	survival (>= 2.3)
 Suggests:
   testthat,
   knitr,
