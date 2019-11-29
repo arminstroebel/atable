@@ -30,7 +30,7 @@
 
 % \usepackage[table]{xcolor}
 
-\usepackage{csquotes}
+
 
 
 \date{\today}
@@ -78,7 +78,7 @@ The atable package supports the analysis and reporting of controlled clinical tr
 \end{itemize}
 The task is the comparison of the target columns between the groups, separately for every split column. This is often the first step of clinical trial analysis to get an impression of the distribution of data. The atable package solves this task by applying descriptive statistics and hypothesis tests and arranges the results in a table ready for printing.
 
-Reporting of clinical trials is such a frequent task that guidelines have been written which recommend certain properties of clinical trial reports \cite{Moher2010}. In particular Item 17a of CONSORT states that \enquote{Trial results are often more clearly displayed in a table rather than in the text}. And Item 15 suggests: \enquote{a table showing baseline demographic and clinical characteristics for each group}. The atable package is specifically designed to comply with these two items.
+Reporting of clinical trials is such a frequent task that guidelines have been written which recommend certain properties of clinical trial reports \cite{Moher2010}. In particular Item 17a of CONSORT states that ``Trial results are often more clearly displayed in a table rather than in the text''. And Item 15 suggests: ``a table showing baseline demographic and clinical characteristics for each group''. The atable package is specifically designed to comply with these two items.
 
 \section{Usage}
 This sections contains examples for copy and paste for those readers in TL;DR-mode. The examples were created with RStudio in a Rnw-file and compiled to pdf with knitr \cite{knitr2018} and \LaTeX \cite{Mittelbach2004}. See folder doc/inst/ for the Rnw-file of this vignette. The atable package only produces tables; it does not produce printable documents. To get a printable document, atable's output must still be converted to other formats with e.\ g.\ Hmisc::latex \cite{Hmisc2018}, officer::body\_add\_table \cite{officer2018} and flextable::regulartable \cite{flextable2018}, see examples below.
