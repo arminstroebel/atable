@@ -1,0 +1,282 @@
+
+
+\documentclass[a4paper,11pt]{article}
+
+\usepackage[utf8]{inputenc}
+
+\usepackage{geometry}
+
+
+
+%\VignetteIndexEntry{Modifying atable}
+%\VignetteEngine{knitr::knitr}
+%\VignetteEncoding{UTF-8}
+
+\usepackage[plainpages=false, colorlinks, linkcolor=blue, citecolor=blue]{hyperref}
+
+
+
+\usepackage{array}
+
+\date{\today}
+\author{Alan Haynes, Armin Ströbel}
+\title{Modifying atable}
+
+
+
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+<<setup, include = FALSE>>=
+
+require(knitr)
+require(Hmisc)
+require(datasets)
+require(atable)
+require(utils)
+@
+
+Most things in `atable` are customizable. This vignette gives examples for some of them. See the `extending atable` vignette for adding methods for new classes. We will the `mtcars` datasets to demonstrate the concepts.
+
+<<mtcars>>=
+data(mtcars)
+# factors
+mtcars$am <- factor(mtcars$am, c(0, 1), c("Automatic", "Manual"))
+mtcars$vs <- factor(mtcars$vs, c(0, 1), c("V-shaped", "straight"))
+# ordered
+mtcars$cyl <- ordered(mtcars$cyl)
+# set format_to
+atable_options(format_to = "Latex")
+@
+
+
+The atable default settings produce the following:
+
+
+<<mtcars table, results='asis'>>=
+
+Hmisc::latex(atable(vs + cyl + hp + disp ~ am, mtcars, format_to="Latex"),
+             file = "",
+             title = "",
+             rowname = NULL,
+             table.env = FALSE)
+
+@
+
+There are in general three approaches to modifying atable's default settings:
+\begin{enumerate}
+\item pass a function to the atable function as an option. This affects only a single call to atable.
+\item pass a function to `atable\textunderscore options`. This affects all calls to `atable` during the session. These settings can be overriden by 1
+\item replace a method in `atable`s namespace. This can be done with any package, but requires more code and is not easily reverted.
+\end{enumerate}
+
+\section{Changing the statistical functions}
+
+In order to use any of these methods, we need suitable functions. Perhaps it is desirable to have t-tests and Kolmogorov-Smirnoff tests simultaneously. When defining test functions, the function has to have arguments `value`, `group` and `...` and return a named list.
+
+<<new_two_sample_htest_numeric>>=
+new_two_sample_htest_numeric <- function(value, group, ...){
+  d <- data.frame(value = value, group = group)
+  group_levels <- levels(group)
+  x <- subset(d, group %in% group_levels[1], select = "value", drop = TRUE)
+  y <- subset(d, group %in% group_levels[2], select = "value", drop = TRUE)
+  ks_test_out <- stats::ks.test(x, y)
+  t_test_out <- stats::t.test(x, y)
+  out <- list(p_ks = ks_test_out$p.value,
+              p_t = t_test_out$p.value)
+  return(out)
+}
+@
+
+Rather than mean and SD, maybe we want median and MAD, as well as the mean and SD. Statistics functions require arguments `x` and `...` and should return a named list. The class of the output should also be defined so that the appropriate formatting function can be selected.
+
+<<new_statistics_numeric>>=
+new_statistics_numeric <- function(x, ...){
+  statistics_out <- list(Median = median(x, na.rm = TRUE),
+                         MAD = mad(x, na.rm = TRUE),
+                         Mean = mean(x, na.rm = TRUE),
+                         SD = sd(x, na.rm = TRUE))
+  class(statistics_out) <- c("statistics_numeric", class(statistics_out))
+  # We will need this new class later to specify the format
+  return(statistics_out)
+}
+@
+
+We also need a function to format the statistics results (the default simply prints all elements of the statistics object, one after the other). Formatting functions require arguments `x` and `...` and should return a dataframe with variable tag (a factor) and value (a character).
+
+<<new_format_statistics_numeric>>=
+new_format_statistics_numeric <- function(x, ...){
+  Median_MAD <- paste(round(c(x$Median, x$MAD), digits = 1), collapse = "; ")
+  Mean_SD <- paste(round(c(x$Mean, x$SD), digits = 1), collapse = "; ")
+  levs <- c("Median; MAD", "Mean; SD")
+  out <- data.frame(tag = factor(levs,
+                                 levels = levs),
+                    # the factor needs levels for the non-alphabetical order
+                    value = c(Median_MAD, Mean_SD),
+                    stringsAsFactors = FALSE)
+  return(out)
+}
+@
+
+
+To use these three functions, we need to tell `atable` about them, using one of the three methods mentioned above. We will assign the testing function to `atable`s namespace. `two\textunderscore sample\textunderscore htest.numeric` will be used for two sample tests until R is restarted.
+
+<<assignInNamespace>>=
+utils::assignInNamespace(x = "two_sample_htest.numeric",
+                         value = new_two_sample_htest_numeric,
+                         ns = "atable")
+@
+
+
+`atable\textunderscore options` can be used to specify a new function instead by referring to the thing to be replaced, in this case `statistics.numeric`. The `new\textunderscore statistics\textunderscore numeric` function will be used until e.g. R is restarted or `atable\textunderscore options\textunderscore reset` is used to restore the defaults, or it is replaced by something else.
+
+<<atable_options>>=
+atable_options("statistics.numeric" = new_statistics_numeric)
+@
+
+The third option is to refer to the function in the `atable` call...
+
+<<call, results='asis'>>=
+
+Hmisc::latex(atable(hp + disp ~ am, mtcars,
+                    format_statistics.statistics_numeric =
+                      new_format_statistics_numeric),
+             file = "",
+             title = "",
+             rowname = NULL,
+             table.env = FALSE)
+@
+
+
+Options that have been set via `atable\textunderscore options` can be restored to there defaults via
+
+
+<<atable_options_reset>>=
+atable_options_reset()
+@
+
+<<atable_options as before, echo=FALSE, results='hide'>>=
+# for printing
+atable_options(format_to = "Latex")
+@
+
+
+
+
+
+\section{Labels}
+
+`atable` can use Hmisc::label and Hmisc::unit, or an `alias` attribute to store labels. By default `labelled` objects (those with labels from Hmisc) are formatted with the label followed by the units in square brackets.
+
+<<Labels>>=
+label(mtcars$hp) <- "Horse power"
+units(mtcars$hp) <- "hp"
+
+@
+
+<<Labels print, results='asis'>>=
+Hmisc::latex(atable(hp + disp ~ 1, mtcars),
+             file = "",
+             title = "",
+             rowname = NULL,
+             table.env = FALSE)
+
+@
+
+Analagous to elsewhere, the `get\textunderscore alias` methods are responsible for handling how the label is composed. If there is no `alias` attribute and the class is not `labelled`, then the variable name will be used, with underscore replaced by blanks. We can use round brackets instead of square ones by replacing the `get\textunderscore alias.labelled` method...
+
+
+<<get_alias>>=
+get_alias.labelled <- function(x, ...){
+    out <- attr(x, "label", exact = TRUE)
+    Units <- attr(x, "units", exact = TRUE)
+    out = if(!is.null(Units)){
+      paste0(out, " (", Units, ")")}else{out}
+    return(out)
+}
+atable_options("get_alias.labelled" = get_alias.labelled)
+
+@
+
+<<get_alias_print, results='asis'>>=
+
+Hmisc::latex(atable(hp + disp ~ 1, mtcars),
+             file = "",
+             title = "",
+             rowname = NULL,
+             table.env = FALSE)
+
+@
+
+If we wanted to use a `label` attribute rather than `alias`, we could change the `get\textunderscore alias.default` function
+
+<<alias_default>>=
+attr(mtcars$disp, "label") <- "Displacement"
+get_alias.default <- function(x, ...){
+    attr(x, "label", exact = TRUE)
+}
+atable_options("get_alias.default" = get_alias.default)
+@
+
+<<alias_default print, results='asis'>>=
+
+Hmisc::latex(atable(hp + disp ~ 1, mtcars),
+             file = "",
+             title = "",
+             rowname = NULL,
+             table.env = FALSE)
+@
+
+
+
+
+\section{P value formatting}
+
+
+By default, p values are formatted to 2 significant digits:
+
+<<format_p_values>>=
+atable_options("format_p_values")(0.12)
+atable_options("format_p_values")(0.012)
+atable_options("format_p_values")(0.0012)
+atable_options("format_p_values")(0.0009)
+@
+
+This is easy to change by overwriting the function in `atable\textunderscore options`. Here we report it to 3 decimal places.
+
+<<format_p_values modify>>=
+fn <- function(x){
+  txt <- sprintf("%3.3f", x)
+  if(x < 0.001) txt <- "<0.001"
+  return(txt)
+}
+atable_options("format_p_values" = fn)
+@
+
+<<format_p_values modify test>>>=
+atable_options("format_p_values")(0.12)
+atable_options("format_p_values")(0.012)
+atable_options("format_p_values")(0.0012)
+atable_options("format_p_values")(0.0009)
+@
+
+The changes are then carried over to the table itself too.
+
+<<format_p_values print, results='asis'>>=
+
+Hmisc::latex(atable(vs + cyl + hp + disp ~ am, mtcars),
+             file = "",
+             title = "",
+             rowname = NULL,
+             table.env = FALSE)
+
+@
+
+It should be noted that as there is no additional formatting function for the test results, so the default method is being used for the new. We would have to assign a class to the object returned from `new\textunderscore two\textunderscore sample\textunderscore htest\textunderscore numeric` and define a suitable test formatting function.
+
+\end{document}
+
