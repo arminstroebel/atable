@@ -38,6 +38,7 @@ require(Hmisc)
 require(datasets)
 require(atable)
 require(utils)
+knitr::opts_chunk$set(warning=FALSE)
 @
 
 Most things in `atable` are customizable. This vignette gives examples for some of them. See the `extending atable` vignette for adding methods for new classes. We will the `mtcars` datasets to demonstrate the concepts.
