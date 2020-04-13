@@ -36,11 +36,12 @@ MYPKGOPTIONS <- settings::options_manager(
       scientific <- sapply(x, function(x)is.numeric(x) && is.finite(x) && x != 0 && abs(log10(abs(x))) > 3)
 
       return(mapply(format, x = x, scientific = scientific,
-             MoreArgs = list(digits = 2, trim = TRUE, nsmall = 0)))
+             MoreArgs = list(digits = atable_options("digits"), trim = TRUE, nsmall = 0)))
     },
   format_percent = function(x){
-    return(sapply(x, format, scientific = FALSE, digits = 2, trim = TRUE, nsmall = 0))
+    return(sapply(x, format, scientific = FALSE, digits = atable_options("digits"), trim = TRUE, nsmall = 0))
     },
+  digits = 2,
   get_alias.default = function(x, ...){
     attr(x, "alias", exact = TRUE)
   },
@@ -164,6 +165,9 @@ MYPKGOPTIONS <- settings::options_manager(
 #'    This functions is called by \code{\link{format_statistics}} and \code{\link{format_tests}} for number,
 #'    that are not p-values or percentages.}
 #'
+#'   \item{\code{digits}}{: 2. How many digits a number should have in the table.
+#'   Used by \code{format_percent} and \code{format_percent} and passed to \code{\link[base]{format}}. }
+#'
 #'    \item{\code{get_alias.default}}{: A function with one argument \code{x} and \code{...} returning a character or \code{NULL}.
 #'    This functions is called by \code{get_alias} and \code{create_alias_mapping} to retrieve alternative Variable names to print
 #'    in the table.}
@@ -172,7 +176,7 @@ MYPKGOPTIONS <- settings::options_manager(
 #'    This functions is called by \code{get_alias} on the columns that have class labelled.}
 #'
 #'    \item{\code{modifiy_colnames_without_alias}}{: A function with one argument \code{x} and \code{...} returning a character.
-#'    This functions is called by \code{create_alias_mapping} on the columns that have \code{is.NULL(get_alias(x))}}
+#'    This functions is called by \code{create_alias_mapping} on the columns that have \code{is.NULL(get_alias(x))}.}
 #' }
 #'
 #' @examples

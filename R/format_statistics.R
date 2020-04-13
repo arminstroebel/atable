@@ -53,8 +53,8 @@ format_statistics.statistics_numeric <- function(x, format_statistics.statistics
     the_mean <- atable_options("format_numbers")(x$mean)
     the_sd <- atable_options("format_numbers")(x$sd)
 
-    values <- c(Mean_SD = paste0(the_mean, " (", the_sd, ")"), valid_missing = paste0(x$length -
-        x$missing, " (", x$missing, ")"))
+    values <- c(Mean_SD = paste0(the_mean, " (", the_sd, ")"), valid_missing = paste0(atable_options("format_numbers")(x$length -
+        x$missing), " (", atable_options("format_numbers")(x$missing), ")"))
 
     format_statistics_out <- data.frame(tag = factor(names(values), levels = names(values)),
         value = values, row.names = NULL, stringsAsFactors = FALSE, check.names = FALSE,
@@ -94,14 +94,12 @@ format_statistics.statistics_factor <- function(x, format_statistics.statistics_
 
     percent <- 100 * value/total
 
-    percent <- atable_options("format_percent")(percent)
-
     # I use sapply(format, ...) instead just format because: ?format says: enough
     # decimal places will be used so that the smallest (in magnitude) number has this
     # many significant digits.  If you have numbers of different magnitudes, the
     # greatest of them will have a lot of digits. sapply ensures that all numbers
     # have the same number of digits, irrespective of the other numbers.
-    value <- paste0(percent, "% (", value, ")")
+    value <- paste0(atable_options("format_percent")(percent), "% (", atable_options("format_numbers")(value), ")")
 
     format_statistics_out <- data.frame(tag = factor(nn, levels = nn), value = value,
         row.names = NULL, stringsAsFactors = FALSE, check.names = FALSE, fix.empty.names = FALSE)
@@ -119,7 +117,7 @@ format_statistics.statistics_factor <- function(x, format_statistics.statistics_
 #' Column \code{'value'} contains the number of observations.
 #' See also \code{'colname_for_observations'} in \code{\link{atable_options}}.
 format_statistics.statistics_count_me <- function(x, ...) {
-    return(data.frame(tag = factor(""), value = as.character(x[[atable_options("colname_for_observations")]]),
+    return(data.frame(tag = factor(""), value = atable_options("format_numbers")(x[[atable_options("colname_for_observations")]]),
         stringsAsFactors = FALSE))
 }
 

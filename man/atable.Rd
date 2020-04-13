@@ -101,7 +101,8 @@ Default is \code{NULL}, meaning that no hypothesis tests are applied.}
 Default is \code{NULL}, meaning that no splitting is done.}
 
 \item{format_to}{A character vector of length 1. Specifies the format of the output of \code{atable}.
-Possible values are \code{'Latex'}, \code{'Word'}, \code{'Raw'}, \code{'HTML'}, \code{'Console'}.
+Possible values are \code{'Latex'}, \code{'Word'}, \code{'Raw'}, \code{'HTML'}, \code{'Console'},
+\code{'markdown'}, \code{'md'}.
 Default is defined in \code{\link{atable_options}}.}
 
 \item{drop_levels}{A logical. If \code{TRUE} then \code{\link[base]{droplevels}} is called on \code{group_col}

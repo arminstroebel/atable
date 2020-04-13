@@ -502,3 +502,19 @@ atable_unsplitted_ungrouped <- function(DD, target_cols, format_to, Alias_mappin
         Alias_mapping)
     return(atable_result)
 }
+
+
+mockup_format_numbers = function(x) {
+  # replaces digits with 'x'
+  # removes -
+  # replaces NA by 0
+
+  x[is.na(x)] = 0
+
+  y = abs(x)
+  y = gsub(pattern="[[:digit:]]", replacement = "x", x = y)
+  y = substring(y, first = 1, last = 4)
+
+
+  return(y)
+}
