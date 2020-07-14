@@ -275,15 +275,15 @@ format_statistics_caller <- function(x, cols, ...) {
 }
 
 arrange_statistics <- function(formated_statistics_result, split_cols, format_to,
-    Alias_mapping) {
+    Alias_mapping, blocks) {
     formated_statistics_result <- replace_NA(formated_statistics_result)
 
-    return(arrange_helper(formated_statistics_result, split_cols, format_to, Alias_mapping))
+    return(arrange_helper(formated_statistics_result, split_cols, format_to, Alias_mapping, blocks))
 }
 
 
 arrange_statistics_and_tests <- function(formated_statistics_result, formated_tests_result,
-    group_col, split_cols, format_to, Alias_mapping) {
+    group_col, split_cols, format_to, Alias_mapping, blocks) {
     formated_statistics_result <- replace_NA(formated_statistics_result)
 
 
@@ -348,42 +348,59 @@ arrange_statistics_and_tests <- function(formated_statistics_result, formated_te
         })
 
 
-    return(arrange_helper(tabr, split_cols, format_to, Alias_mapping))
+    return(arrange_helper(tabr, split_cols, format_to, Alias_mapping, blocks))
 }
 
-arrange_helper <- function(tab, split_cols, format_to, Alias_mapping) {
+arrange_helper <- function(tab, split_cols, format_to, Alias_mapping, blocks) {
 
-    # map to aliases
+
+    # map cols and blocks to aliases
     tab[[atable_options("colname_for_variable")]] <- plyr::mapvalues(x = tab[[atable_options("colname_for_variable")]],
         from = Alias_mapping$old, to = Alias_mapping$new, warn_missing = FALSE)
 
+    blocks <- if(!is.null(blocks)){
+      lapply(blocks, plyr::mapvalues,
+             from = Alias_mapping$old,
+             to = Alias_mapping$new,
+             warn_missing = FALSE)}
+    else{blocks}
 
     switch(format_to, Word = {
-        tab <- indent_data_frame(tab, keys = c(split_cols, atable_options("colname_for_variable"),
-            "tag"), indent_character = "    ")
+        tab <- indent_data_frame_helper(DD = tab,
+                                       split_cols = split_cols,
+                                       blocks = blocks,
+                                       indent_character = "    ")
         return(tab)
     }, Latex = {
         # the order is important: translate_to_LaTeX may change the colnames of tab. So
         # it is applied second.
-        tab <- indent_data_frame(tab, keys = c(split_cols, atable_options("colname_for_variable"),
-            "tag"), indent_character = "\\quad")
+        tab <- indent_data_frame_helper(DD = tab,
+                                       split_cols = split_cols,
+                                       blocks = blocks,
+                                       indent_character = "\\quad")
         tab <- translate_to_LaTeX(tab)
         return(tab)
     }, HTML = {
-        tab <- indent_data_frame(tab, keys = c(split_cols, atable_options("colname_for_variable"),
-            "tag"), indent_character = " &emsp; ")
+        tab <- indent_data_frame_helper(DD = tab,
+                                       split_cols = split_cols,
+                                       blocks = blocks,
+                                       indent_character = " &emsp; ")
         return(tab)
     }, Console = {
-        tab <- indent_data_frame(tab, keys = c(split_cols, atable_options("colname_for_variable"),
-            "tag"), indent_character = "    ")
+        tab <- indent_data_frame_helper(DD = tab,
+                                        split_cols = split_cols,
+                                        blocks = blocks,
+                                        indent_character = "    ")
         tab[is.na(tab)] <- ""
 
         class(tab) <- c("atable", class(tab))
 
         return(tab)
     }, markdown = {
-        tab <- indent_data_frame(tab, keys = c(split_cols, atable_options("colname_for_variable"),
-                                               "tag"), indent_character = "&nbsp;&nbsp;&nbsp;&nbsp;")
+        tab <- indent_data_frame_helper(DD = tab,
+                                        split_cols = split_cols,
+                                        blocks = blocks,
+                                        indent_character = "&nbsp;&nbsp;&nbsp;&nbsp;")
         return(tab)
     },
     {
@@ -396,7 +413,7 @@ print.atable <- function(x, ...) print(as.data.frame(x), right = FALSE, ...)
 
 
 atable_splitted_grouped <- function(DD, target_cols, group_col, split_cols, format_to,
-    Alias_mapping, ...) {
+    Alias_mapping, blocks, ...) {
 
     Observation_and_target_cols <- c(atable_options("colname_for_observations"),
         target_cols)
@@ -421,12 +438,12 @@ atable_splitted_grouped <- function(DD, target_cols, group_col, split_cols, form
 
 
     atable_result <- arrange_statistics_and_tests(formated_statistics_result, formated_tests_result,
-        group_col, split_cols, format_to, Alias_mapping)
+        group_col, split_cols, format_to, Alias_mapping, blocks)
     return(atable_result)
 }
 
 atable_unsplitted_grouped <- function(DD, target_cols, group_col, split_cols, format_to,
-    Alias_mapping, ...) {
+    Alias_mapping, blocks, ...) {
 
     Observation_and_target_cols <- c(atable_options("colname_for_observations"),
         target_cols)
@@ -449,11 +466,11 @@ atable_unsplitted_grouped <- function(DD, target_cols, group_col, split_cols, fo
         ...)
 
     atable_result <- arrange_statistics_and_tests(formated_statistics_result, formated_tests_result,
-        group_col, split_cols, format_to, Alias_mapping)
+        group_col, split_cols, format_to, Alias_mapping, blocks)
     return(atable_result)
 }
 
-atable_splitted_ungrouped <- function(DD, target_cols, split_cols, format_to, Alias_mapping,
+atable_splitted_ungrouped <- function(DD, target_cols, split_cols, format_to, Alias_mapping, blocks,
     ...) {
 
     Observation_and_target_cols <- c(atable_options("colname_for_observations"),
@@ -471,13 +488,13 @@ atable_splitted_ungrouped <- function(DD, target_cols, split_cols, format_to, Al
         cols = Observation_and_target_cols, ...)
 
     atable_result <- arrange_statistics(formated_statistics_result, split_cols, format_to,
-        Alias_mapping)
+        Alias_mapping, blocks)
 
 
     return(atable_result)
 }
 
-atable_unsplitted_ungrouped <- function(DD, target_cols, format_to, Alias_mapping,
+atable_unsplitted_ungrouped <- function(DD, target_cols, format_to, Alias_mapping, blocks,
     ...) {
 
     Observation_and_target_cols <- c(atable_options("colname_for_observations"),
@@ -499,7 +516,7 @@ atable_unsplitted_ungrouped <- function(DD, target_cols, format_to, Alias_mappin
     split_cols <- NULL  # i do not want to write another helper function.
     # Just use arrange_statistics, which uses split_cols.
     atable_result <- arrange_statistics(formated_statistics_result, split_cols, format_to,
-        Alias_mapping)
+        Alias_mapping, blocks)
     return(atable_result)
 }
 
@@ -517,4 +534,224 @@ mockup_format_numbers = function(x) {
 
 
   return(y)
+}
+
+indent_data_frame_helper = function(DD, split_cols, blocks, character_empty = "",
+                                    numeric_empty = NA, indent_character = "\\quad", colname_indent = "Group")
+{
+  # checks if blocking is applicable and calls the appropriate indent_data_frame()
+
+  out <- if(  is.null(split_cols) && !is.null(blocks) ) {
+
+
+    indent_data_frame_with_blocks(DD = DD,
+                                  blocks = blocks,
+                                  character_empty = character_empty,
+                                  numeric_empty = numeric_empty,
+                                  indent_character = indent_character,
+                                  colname_indent = colname_indent)
+  }else{
+
+    keys = c(split_cols, atable_options("colname_for_variable"), "tag")
+
+    indent_data_frame(DD = DD,
+                      keys = keys,
+                      values = setdiff(colnames(DD), keys),
+                      character_empty = character_empty,
+                      numeric_empty = numeric_empty,
+                      indent_character = indent_character,
+                      colname_indent = colname_indent)
+  }
+
+  return(out)
+}
+
+indent_data_frame_with_blocks = function(DD, blocks, character_empty = "", numeric_empty = NA, indent_character = "\\quad", colname_indent = "Group")
+{
+
+
+  # xxx input chekcen
+  # stopifnot(is.data.frame(DD), is.character(keys), is.character(values), keys %in%
+  #             colnames(DD), values %in% colnames(DD), anyDuplicated(c(keys, values, colname_indent)) ==
+  #             0)
+
+
+
+
+  stopifnot(!is.null(blocks))
+  # block to data.frame
+  name_adder = function(x, name){data.frame(target_cols = x,
+                                            block_name = name,
+                                            stringsAsFactors = FALSE)}
+
+  bb = mapply(name_adder, x=blocks, name=names(blocks),
+              SIMPLIFY = FALSE)
+
+  bb = do.call(rbind, bb)
+
+  bb = doBy::renameCol(bb, "target_cols", atable_options("colname_for_variable"))
+
+  bb$block_name = factor(bb$block_name, levels = names(blocks)) # the order of the blocks is necessary
+
+  bb = doBy::renameCol(bb, "block_name", atable_options("colname_for_blocks"))
+
+  # xxx the_block_name in atable_options
+  # xxx naming conflict: the_block_name schon eine Spalte von DD. stopifnot
+  the_block_name = atable_options("colname_for_blocks")
+  if(the_block_name %in% colnames(DD)){stop(the_block_name , " already in the data.
+                                            Consider changing the data or atable_options('colname_for_blocks')")}
+
+
+
+  DD = merge(DD, bb,
+             all.x = TRUE) # merge with blocks
+
+  # order with blocks
+  ff <- c(atable_options("colname_for_variable"), the_block_name)
+  ff <- stats::as.formula(paste("~", paste(ff, collapse = "+"), collapse = ""))
+
+  DD <- doBy::orderBy(ff, DD)
+
+  if(atable_options("colname_for_order") %in% colnames(DD)){stop(atable_options("colname_for_order") , " already in the data.
+                                            Consider changing the data or atable_options('colname_for_order')")}
+
+
+
+
+
+  DD[[atable_options("colname_for_order")]] = 1:nrow(DD) #  xxx order in atable options schreiben. naming conflict stopifnot
+
+
+  # line_adder
+
+  line_adder <- function(DD, keys, values, the_key, character_empty = "", numeric_empty = NA)
+  {
+    # adds a new line on top of the data frame with keys, value are empty.
+
+    to_add <- DD[1, , drop = FALSE]
+
+    # empty columns empty key columns
+    empty_keys <- setdiff(keys, keys[1:which(keys == the_key)])
+    to_add[empty_keys] <- character_empty
+
+    # empty value columns
+
+    return_empty_value <- function(x) {
+      type <- class(x)
+      switch(type, character = character_empty, numeric = numeric_empty, integer = numeric_empty,
+             factor = character_empty)
+    }
+
+    to_add[values] <- lapply(to_add[values], return_empty_value)
+
+
+    return(rbind(to_add, DD))
+  }
+
+
+
+
+  # Apply line_adder for every key combination, Order: backwards
+  keys_indent = c(the_block_name, atable_options("colname_for_variable"), "tag")
+  keys <- keys_indent
+  values <- setdiff(setdiff(colnames(DD), atable_options("colname_for_order")), keys)
+  # line_adder adds new lines with empty values. But I want to keep the column order. So I remove this column from values
+
+  for (index in seq(from = length(keys) - 1, to = 1, by = -1)) {
+    DD <- plyr::ddply(DD, keys[1:index], line_adder, keys = keys, values = values,
+                      the_key = keys[index])
+  }
+
+
+
+  ff <- stats::as.formula(paste("~", paste(c(atable_options("colname_for_order"), keys_indent ), collapse = "+"), collapse = "")) # xxx order aus atable options
+
+  DD <- doBy::orderBy(ff, DD)
+
+  # line adder adds new lines even when block is na. remove these lines
+  b <- is.na(DD[[the_block_name]]) & nchar(DD[[ atable_options("colname_for_variable")]])==0
+  DD <- DD[!b, ]
+
+
+
+  fun_for_identical <- function(x,y) !is.na(x) && !is.na(y) && identical(x,y)
+
+
+  # casts everything to character and then replace_consecutive
+  DD[keys] <- lapply(DD[keys], as.character)
+  DD[keys] <- lapply(DD[keys], replace_consecutive,
+                     by = indent_character,
+                     fun_for_identical = fun_for_identical)
+
+
+  # some NA in blocks still remain. Set to "" for 'no indent'
+  b <- is.na(DD[[the_block_name]])
+  DD[b, the_block_name] <- ""
+
+  # indent
+
+  indent <- DD[keys]  # keys has length 2 and no duplicates. So DD[keys] is a data.frame, even witout drop=FALSE for '['
+  indent <- apply(indent, 1, paste, collapse = " ")
+
+
+
+  DD[[colname_indent]] <- indent
+
+  DD <- DD[c(colname_indent, values)]
+
+
+  rownames(DD) <- NULL
+  return(DD)
+
+}
+
+
+check_blocks <- function(blocks, target_cols)
+{
+
+  # blocks <- NULL is ok:
+  if(is.null(blocks)){return(TRUE)}
+
+  # check that variables are in a single block
+
+  stopifnot(is.list(blocks),
+            sapply(blocks, is.character))
+
+
+  n <- names(blocks)
+  if (is.null(n)) stop("names(blocks) must not be NULL")
+
+  b <- is.na(n)
+  if (any(b)) stop("names(blocks) must not be NA")
+
+  b <- duplicated(n)
+  if (any(b)) stop("names(blocks) must be unique: ", paste(n[b], collapse = ", "))
+
+
+  ublock <- unlist(blocks)
+
+  b <- duplicated(ublock)
+  if (any(b)) stop("names in blocks not unique: ", paste(ublock[b], collapse = ", "))
+
+
+  b = ublock %in% target_cols
+
+  if(any(!b)){stop("names in blocks must be in target_cols: ", paste(ublock[!b], collapse = ", "))}
+
+  # check that variables are together
+  lapply(blocks, function(x){
+    # consecutive variables
+    w <- which(target_cols %in% x)
+    y <- min(w):max(w)
+
+    if (length(y) != length(w)) stop("block variables appear to be separated: ", paste(x, collapse = ", "))
+    if (any(w != y)) stop("block variables appear to be in a different order to target_cols: ", paste(x, collapse = ", "))
+
+    # order as in target_cols
+    xo = ordered(x, levels = target_cols)
+    b = (sort(xo) == xo)
+    if(any(!b)) stop("block variables appear to be in a different order to target_cols: ", paste(x[!b], collapse = ", "))
+
+  })
+  return(TRUE)
 }

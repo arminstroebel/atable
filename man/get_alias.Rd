@@ -39,7 +39,7 @@ This is a workhorse function, see \code{create_alias_mapping} for the high level
 \itemize{
 \item \code{labelled}: Retrieve attributes \code{label} and \code{units}, if available.
 Units are bracketed by '[]'. See also \code{\link[Hmisc]{label}} and \code{\link[Hmisc]{units}}.
-The user may alter this method via \code{\link{atable_options}}, see help there. xxx
+The user may alter this method via \code{\link{atable_options}}, see help there.
 
 \item \code{default}: Retrieve attribute \code{alias} via \code{\link[base]{attr}}.
 This attribute may be an arbitrary character.

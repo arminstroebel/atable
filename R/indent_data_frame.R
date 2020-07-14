@@ -98,6 +98,10 @@ indent_data_frame <- function(DD, keys, values = setdiff(colnames(DD), keys), ch
     line_adder <- function(DD, keys, values, the_key, character_empty = "", numeric_empty = NA) {
         # adds a new line on top of the data frame with keys, value are empty.
 
+
+
+
+
         to_add <- DD[1, , drop = FALSE]
 
         # empty columns empty key columns
@@ -143,5 +147,6 @@ indent_data_frame <- function(DD, keys, values = setdiff(colnames(DD), keys), ch
 
     DD <- DD[c(colname_indent, values)]
 
+    rownames(DD) <- NULL
     return(DD)
 }

@@ -48,6 +48,12 @@
 #' \code{group_col} must be a single name if given.
 #' \code{group_col} and \code{split_cols} may be omitted and can be replaced by \code{1} in this case.
 #' The \code{|} may also be omitted if no \code{split_cols} are given.
+#' @param blocks \code{NULL} or a list. If blocks is a list, then the names of the list must be non-NA characters.
+#' The elements of the list must be some of \code{target_cols}, retaining the order of \code{target_cols}.
+#' Also in this case \code{split_cols} must be \code{NULL} as simultaneous blocking and splitting is not supported.
+#' Default is \code{NULL}, meaning that no blocking is done. Variables of a block are additionally indented.
+#' Blocking has no effect on the statistics, it only affects the indentation of the resulting table. See Examples.
+#'
 #'
 #' @param ... Passed from and to other methods. You can use the ellipsis ... to modify atable:
 #' For example the default-statistics for numeric variables are mean and sd. To change these statistics pass
@@ -133,8 +139,8 @@
 #' }
 #' \item{\code{'HTML'}: }{Same as for \code{format_to = 'Word'} but a different character indents
 #' the first column.}
-#' #' \item{\code{'Console'}: }{Meant for printing in the R console for interactive analysis. Same as for \code{format_to = 'Word'} but a different character indents
-#' the first column.}
+#' #' \item{\code{'Console'}: }{Meant for printing in the R console for interactive analysis.
+#' Same as for \code{format_to = 'Word'} but a different character indents the first column.}
 #' \item{\code{'Latex'}: }{Same as for \code{format_to = 'Word'} but a different character indents
 #' the first column and with \code{\link{translate_to_LaTeX}} applied afterwards. }
 #' }
@@ -181,6 +187,16 @@
 #' atable::atable(mpg + hp + gear + qsec ~ cyl | vs,
 #'                mtcars,
 #'                format_to = 'Console')
+#'
+#' # Blocks
+#' # In datasets::mtcars the variables cyl, disp and mpg are related to the engine and am and gear are
+#' # related to the gearbox. So grouping them together is desireable.
+#' atable::atable(datasets::mtcars,
+#'                target_cols = c("cyl", "disp", "hp", "am", "gear", "qsec") ,
+#'                blocks = list("Engine" = c("cyl", "disp", "hp"),
+#'                              "Gearbox" = c("am", "gear")),
+#'                format_to = "Console")
+#' # Note that Variable qsec is not blocked and thus not indented.
 
 #' @export
 atable <- function(x, ...) {
@@ -191,7 +207,7 @@ atable <- function(x, ...) {
 #' @export
 #' @describeIn atable applies descriptive statistics and hypothesis tests, arranges the results for printing.
 atable.data.frame <- function(x, target_cols, group_col = NULL, split_cols = NULL,
-    format_to = atable_options("format_to"), drop_levels = TRUE, add_levels_for_NA = FALSE,
+    format_to = atable_options("format_to"), drop_levels = TRUE, add_levels_for_NA = FALSE, blocks = NULL,
     ...) {
 
     format_to <- switch(format_to, Latex = "Latex", latex = "Latex", Word = "Word",
@@ -210,6 +226,9 @@ atable.data.frame <- function(x, target_cols, group_col = NULL, split_cols = NUL
 
 
     DD <- DD[c(target_cols, split_cols, group_col)]  # only these columns are relevant
+
+    # check blocks
+    b <- check_blocks(blocks, target_cols)
 
     Alias_mapping <- create_alias_mapping(DD[c(target_cols, split_cols)])
     # I create Alias_mapping once here and pass it down to other functions, because
@@ -261,24 +280,29 @@ atable.data.frame <- function(x, target_cols, group_col = NULL, split_cols = NUL
     DD <- add_observation_column(DD)
 
 
+    # check blocks and target_cols
+    if(!is.null(blocks)) {
+      if( !is.null(split_cols) ){
+        stop("When blocks is not NULL, then split_cols must be NULL. Blocking with split_cols is not supported.")}
+      }
 
     # Check if group_col or split_cols are NULL and call the appropriate
     # atable-functions
     result <- if (is.null(group_col)) {
         if (is.null(split_cols)) {
             atable_unsplitted_ungrouped(DD = DD, target_cols = target_cols, format_to = format_to,
-                Alias_mapping, ...)
+                Alias_mapping = Alias_mapping, blocks = blocks, ...)
         } else {
             atable_splitted_ungrouped(DD = DD, target_cols = target_cols, split_cols = split_cols,
-                Alias_mapping, format_to = format_to, ...)
+                Alias_mapping = Alias_mapping, blocks = blocks, format_to = format_to, ...)
         }
     } else {
         if (is.null(split_cols)) {
             atable_unsplitted_grouped(DD = DD, target_cols = target_cols, group_col = group_col,
-                Alias_mapping, split_cols = split_cols, format_to = format_to, ...)
+                Alias_mapping = Alias_mapping, split_cols = split_cols, format_to = format_to, blocks = blocks, ...)
         } else {
             atable_splitted_grouped(DD = DD, target_cols = target_cols, group_col = group_col,
-                split_cols = split_cols, format_to = format_to, Alias_mapping, ...)
+                split_cols = split_cols, format_to = format_to, Alias_mapping = Alias_mapping, blocks = blocks, ...)
         }
     }
 

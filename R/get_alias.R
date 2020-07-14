@@ -22,7 +22,7 @@ get_alias <- function(x, ...) {
 #' @export
 #' @describeIn get_alias Retrieve attributes \code{label} and \code{units}, if available.
 #' Units are bracketed by '[]'. See also \code{\link[Hmisc]{label}} and \code{\link[Hmisc]{units}}.
-#' The user may alter this method via \code{\link{atable_options}}, see help there. xxx
+#' The user may alter this method via \code{\link{atable_options}}, see help there.
 get_alias.labelled <- function(x, ...) {
     atable_options("get_alias.labelled")(x, ...)
 }

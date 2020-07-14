@@ -36,6 +36,11 @@ The following options are supported:
   This character will show up in the results of \code{\link{atable}}, so it can be modified.
   There may be name clashes with user-supplied data.frames; so modification may be necessary.}
 
+  \item{\code{colname_for_blocks}}{: A character with length 1. Default is \code{'block_name___'}.
+ Used in function \code{indent_data_frame_with_blocks}.
+ This character will not show up in the results and is only used internally for intermediate data.frames.
+ There may be name clashes with user-supplied data.frames; so modification may be necessary.}
+
   \item{\code{labels_TRUE_FALSE}}{: A character of length 2. Default is \code{c('yes', 'no')}.
   Currently used in function \code{statistics.logical} (see \code{\link{statistics}}) to cast logical to factor.
   \code{TRUE} is mapped to \code{labels_TRUE_FALSE[1]} and \code{FALSE} to \code{labels_TRUE_FALSE[2]}.

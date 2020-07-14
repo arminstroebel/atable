@@ -16,6 +16,7 @@ atable(x, ...)
   format_to = atable_options("format_to"),
   drop_levels = TRUE,
   add_levels_for_NA = FALSE,
+  blocks = NULL,
   ...
 )
 
@@ -111,6 +112,12 @@ and \code{split_cols} beforefurther processsing. Default is \code{TRUE}.}
 \item{add_levels_for_NA}{If \code{TRUE} then \code{\link[base:factor]{addNA}} is called on \code{group_col} and
 \code{split_cols} before further processsing. Default is \code{FALSE}.}
 
+\item{blocks}{\code{NULL} or a list. If blocks is a list, then the names of the list must be non-NA characters.
+The elements of the list must be some of \code{target_cols}, retaining the order of \code{target_cols}.
+Also in this case \code{split_cols} must be \code{NULL} as simultaneous blocking and splitting is not supported.
+Default is \code{NULL}, meaning that no blocking is done. Variables of a block are additionally indented.
+Blocking has no effect on the statistics, it only affects the indentation of the resulting table. See Examples.}
+
 \item{formula}{A formula of the form \code{target_cols ~ group_col | split_cols}.
 The \code{|} separates the \code{group_col} from the \code{split_cols}.
 Read the \code{|} as 'given' as in a conditional probability \code{P(target_cols | split_cols)}.
@@ -152,8 +159,8 @@ The hypothesis test are arranged horizontally.
 }
 \item{\code{'HTML'}: }{Same as for \code{format_to = 'Word'} but a different character indents
 the first column.}
-#' \item{\code{'Console'}: }{Meant for printing in the R console for interactive analysis. Same as for \code{format_to = 'Word'} but a different character indents
-the first column.}
+#' \item{\code{'Console'}: }{Meant for printing in the R console for interactive analysis.
+Same as for \code{format_to = 'Word'} but a different character indents the first column.}
 \item{\code{'Latex'}: }{Same as for \code{format_to = 'Word'} but a different character indents
 the first column and with \code{\link{translate_to_LaTeX}} applied afterwards. }
 }
@@ -211,4 +218,14 @@ units(mtcars$qsec) = 's'
 atable::atable(mpg + hp + gear + qsec ~ cyl | vs,
                mtcars,
                format_to = 'Console')
+
+# Blocks
+# In datasets::mtcars the variables cyl, disp and mpg are related to the engine and am and gear are
+# related to the gearbox. So grouping them together is desireable.
+atable::atable(datasets::mtcars,
+               target_cols = c("cyl", "disp", "hp", "am", "gear", "qsec") ,
+               blocks = list("Engine" = c("cyl", "disp", "hp"),
+                             "Gearbox" = c("am", "gear")),
+               format_to = "Console")
+# Note that Variable qsec is not blocked and thus not indented.
 }
