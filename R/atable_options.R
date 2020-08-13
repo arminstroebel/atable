@@ -1,6 +1,8 @@
 # This file is based on https://cran.r-project.org/web/packages/settings/vignettes/settings.html MYPKGOPTIONS Variable, global to
 # package's namespace.  This function is not exported to user space and does not need to be documented.
 MYPKGOPTIONS <- settings::options_manager(
+  add_margins = FALSE,
+  colname_for_total = "Total",
   replace_NA_by = "missing",
   colname_for_variable = "variable___",
   colname_for_observations = "Observations",
@@ -48,7 +50,9 @@ MYPKGOPTIONS <- settings::options_manager(
     attr(x, "alias", exact = TRUE)
   },
   modifiy_colnames_without_alias = function(x, ...){
-    gsub(x, pattern = "_", replacement = " ")},
+    x = gsub(x, pattern = "_", replacement = " ")
+    x = trimws(x, which ="both")
+    return(x)},
   get_alias.labelled = function(x, ...){
 
     out <- attr(x, "label", exact = TRUE)
@@ -78,10 +82,15 @@ MYPKGOPTIONS <- settings::options_manager(
 #' @section Supported options:
 #' The following options are supported:
 #' \itemize{
+#'  \item{\code{add_margins}}{: A logical with length 1, TRUE of FALSE. This is the default-value of atable's
+#'  argument \code{add_margins}. See the help there.}
+#'
+#'  \item{\code{colname_for_total}}{: A character with length 1. Default is \code{'Total'}. This character will show up
+#'  in the results of \code{\link{atable}} when \code{add_margins} is \code{TRUE} and \code{group_col} is not \code{NULL}.}
+#'
 #'  \item{\code{replace_NA_by}}{: A character with length 1, or \code{NULL}. Default is \code{'missing'}.
 #'  Used in function \code{\link{replace_NA}}. This character will show up in the results of \code{\link{atable}},
 #'  so it can be modified. }
-#'
 #'
 #'  \item{\code{colname_for_variable}}{: A character with length 1. Default is \code{'variable___'}.
 #'  Used in function \code{add_name_to_tests} and \code{add_name_to_statistics}.
@@ -183,7 +192,8 @@ MYPKGOPTIONS <- settings::options_manager(
 #'    This functions is called by \code{get_alias} on the columns that have class labelled.}
 #'
 #'    \item{\code{modifiy_colnames_without_alias}}{: A function with one argument \code{x} and \code{...} returning a character.
-#'    This functions is called by \code{create_alias_mapping} on the columns that have \code{is.NULL(get_alias(x))}.}
+#'    This functions is called by \code{create_alias_mapping} on the columns that have \code{is.NULL(get_alias(x))}.
+#'    Replaces underscores by blanks and then calls \code{\link[base]{trimws}}. }
 #' }
 #'
 #' @examples

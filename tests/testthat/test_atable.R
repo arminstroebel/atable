@@ -436,3 +436,22 @@ test_that("group_col has level ' ' (blank)", {
 })
 
 
+
+tab = atable::atable(atable::test_data,
+                     target_cols = "Numeric",
+                     group_col = "Group",
+                     split_cols = "Split1",
+                     add_margins = TRUE,
+                     format_to = "Console")
+
+
+test_that("add_margins", {
+
+  expect_equal(class(tab), c("atable", "data.frame"))
+
+  expect_equal(
+    as.numeric(tab$Total[3]),
+    as.numeric(tab$Treatment[3]) + as.numeric(tab$Control[3])
+  )
+
+})

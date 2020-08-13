@@ -4,7 +4,8 @@
 \name{test_data}
 \alias{test_data}
 \title{A data.frame with random data of various classes}
-\format{A data frame with 129 rows and 11 variables:
+\format{
+A data frame with 129 rows and 11 variables:
 \describe{
   \item{Split1}{A factor with 2 levels, drawn uniformly.}
   \item{Split2}{A factor with 3 levels, drawn uniformly.}
@@ -20,7 +21,8 @@
   a sample of the Poisson distribution with lambda \code{42}.}
 
 }
-6 Missing values were randomly added to each of Numeric, Numeric2, Factor, Ordered, Character and Date.}
+6 Missing values were randomly added to each of Numeric, Numeric2, Factor, Ordered, Character and Date.
+}
 \usage{
 test_data
 }

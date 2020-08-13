@@ -36,10 +36,10 @@
 #'  Default is defined in \code{\link{atable_options}}.
 #'
 #' @param drop_levels A logical. If \code{TRUE} then \code{\link[base]{droplevels}} is called on \code{group_col}
-#'  and \code{split_cols} beforefurther processsing. Default is \code{TRUE}.
+#'  and \code{split_cols} before further processing. Default is \code{TRUE}.
 #'
 #' @param add_levels_for_NA If \code{TRUE} then \code{\link[base:factor]{addNA}} is called on \code{group_col} and
-#' \code{split_cols} before further processsing. Default is \code{FALSE}.
+#' \code{split_cols} before further processing. Default is \code{FALSE}.
 #'
 #' @param formula A formula of the form \code{target_cols ~ group_col | split_cols}.
 #' The \code{|} separates the \code{group_col} from the \code{split_cols}.
@@ -54,6 +54,10 @@
 #' Default is \code{NULL}, meaning that no blocking is done. Variables of a block are additionally indented.
 #' Blocking has no effect on the statistics, it only affects the indentation of the resulting table. See Examples.
 #'
+#' @param add_margins A logical with length one, \code{TRUE} or \code{FALSE}. Default is defined
+#' in \code{\link{atable_options}} as \code{FALSE}. When \code{add_margins} is \code{TRUE} and
+#' \code{group_col} is not \code{NULL}, a column containing the results of an ungrouped \code{atable}-call is added to
+#'  the results. See Examples.
 #'
 #' @param ... Passed from and to other methods. You can use the ellipsis ... to modify atable:
 #' For example the default-statistics for numeric variables are mean and sd. To change these statistics pass
@@ -197,6 +201,24 @@
 #'                              "Gearbox" = c("am", "gear")),
 #'                format_to = "Console")
 #' # Note that Variable qsec is not blocked and thus not indented.
+#'
+#'
+#'
+#' # add_margins
+#' atable::atable(atable::test_data,
+#'                target_cols = "Numeric",
+#'                group_col = "Group",
+#'                split_cols = "Split1",
+#'                add_margins = TRUE,
+#'                format_to = "Console")
+#' # The column 'Total' contains the results of the ungrouped atable-call:
+#' # The number of observations is the sum of observations of the groups.
+#' # The default of add_margins can be changed via atable_options.
+#'
+
+
+
+
 
 #' @export
 atable <- function(x, ...) {
@@ -208,7 +230,7 @@ atable <- function(x, ...) {
 #' @describeIn atable applies descriptive statistics and hypothesis tests, arranges the results for printing.
 atable.data.frame <- function(x, target_cols, group_col = NULL, split_cols = NULL,
     format_to = atable_options("format_to"), drop_levels = TRUE, add_levels_for_NA = FALSE, blocks = NULL,
-    ...) {
+    add_margins = atable_options("add_margins"), ...) {
 
     format_to <- switch(format_to, Latex = "Latex", latex = "Latex", Word = "Word",
         word = "Word", HTML = "HTML", html = "HTML", Console = "Console", console = "Console",
@@ -235,6 +257,8 @@ atable.data.frame <- function(x, target_cols, group_col = NULL, split_cols = NUL
     # subsetting rows in DD removes attributes.  See Hmisc getAnywhere('[.labelled')
     # for a workaround. But I do not know all classes and hence cannot write [
     # methods for them.
+
+    b = check_alias_mapping(Alias_mapping)
 
     # I cast group_col and split_cols to factor that allows more flexibility for the
     # input than only factor: grouping and splitting by character, numeric and
@@ -317,6 +341,32 @@ atable.data.frame <- function(x, target_cols, group_col = NULL, split_cols = NUL
     } else {
         result
     }
+
+
+    # add_margins
+    result <- if(isTRUE(add_margins) & !is.null(group_col)){
+      tab_no_group <- atable(x = x, target_cols = target_cols, group_col = NULL, split_cols = split_cols,
+             format_to = format_to, drop_levels = drop_levels, add_levels_for_NA = add_levels_for_NA, blocks = blocks,
+             ...)
+
+      stopifnot(identical(tab_no_group[[atable::atable_options("colname_for_group")]],
+                result[[atable::atable_options("colname_for_group")]]))
+
+
+
+      tab_no_group <- doBy::renameCol(tab_no_group,
+                                     atable::atable_options("colname_for_value"),
+                                     atable::atable_options("colname_for_total")
+      )
+
+
+      tab_with_margin <- cbind(tab_no_group, result[-1])
+      class(tab_with_margin) <- class(result) # the cbind does not kno class "atable" and dispatches to data.frame.
+
+      tab_with_margin
+
+
+    } else {result}
 
     return(result)
 }

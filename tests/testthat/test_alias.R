@@ -144,3 +144,41 @@ test_that("replace get_alias.labelled via atable_options", {
   atable_options_reset() # reset the defautl attribute for alias
 
 })
+
+
+
+# check check_alias_mapping
+
+# create a data.frame with name clashes in the aliases.
+
+n = 5
+
+EE = data.frame(alias_1 = rnorm(n),
+                alias_2 = rnorm(n),
+                alias__ = rnorm(n),
+                alias____ = rnorm(n),
+                no_clash = rnorm(n))
+
+
+
+attr(EE$alias_1, "alias") <- "!alias! name [clash]"
+
+attr(EE$alias_2, "alias") <- "!alias! name [clash]"
+
+test_that("check_alias_mapping behaves as expected", {
+
+  Alias_mapping = create_alias_mapping(EE)
+  expect_error(check_alias_mapping(Alias_mapping))
+
+  # clash because duplicated aliases
+  Alias_mapping = create_alias_mapping(EE[c("alias_1", "alias_2")])
+  expect_error(check_alias_mapping(Alias_mapping))
+
+  # clash because whitespace got trimmed
+  Alias_mapping = create_alias_mapping(EE[c("alias__", "alias____")])
+  expect_error(check_alias_mapping(Alias_mapping))
+
+  # no clash
+  Alias_mapping = create_alias_mapping(EE[c("alias__", "alias_1", "no_clash")])
+  expect_true(check_alias_mapping(Alias_mapping))
+})

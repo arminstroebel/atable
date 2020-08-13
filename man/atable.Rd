@@ -17,6 +17,7 @@ atable(x, ...)
   drop_levels = TRUE,
   add_levels_for_NA = FALSE,
   blocks = NULL,
+  add_margins = atable_options("add_margins"),
   ...
 )
 
@@ -107,16 +108,21 @@ Possible values are \code{'Latex'}, \code{'Word'}, \code{'Raw'}, \code{'HTML'}, 
 Default is defined in \code{\link{atable_options}}.}
 
 \item{drop_levels}{A logical. If \code{TRUE} then \code{\link[base]{droplevels}} is called on \code{group_col}
-and \code{split_cols} beforefurther processsing. Default is \code{TRUE}.}
+and \code{split_cols} before further processing. Default is \code{TRUE}.}
 
 \item{add_levels_for_NA}{If \code{TRUE} then \code{\link[base:factor]{addNA}} is called on \code{group_col} and
-\code{split_cols} before further processsing. Default is \code{FALSE}.}
+\code{split_cols} before further processing. Default is \code{FALSE}.}
 
 \item{blocks}{\code{NULL} or a list. If blocks is a list, then the names of the list must be non-NA characters.
 The elements of the list must be some of \code{target_cols}, retaining the order of \code{target_cols}.
 Also in this case \code{split_cols} must be \code{NULL} as simultaneous blocking and splitting is not supported.
 Default is \code{NULL}, meaning that no blocking is done. Variables of a block are additionally indented.
 Blocking has no effect on the statistics, it only affects the indentation of the resulting table. See Examples.}
+
+\item{add_margins}{A logical with length one, \code{TRUE} or \code{FALSE}. Default is defined
+in \code{\link{atable_options}} as \code{FALSE}. When \code{add_margins} is \code{TRUE} and
+\code{group_col} is not \code{NULL}, a column containing the results of an ungrouped \code{atable}-call is added to
+ the results. See Examples.}
 
 \item{formula}{A formula of the form \code{target_cols ~ group_col | split_cols}.
 The \code{|} separates the \code{group_col} from the \code{split_cols}.
@@ -228,4 +234,18 @@ atable::atable(datasets::mtcars,
                              "Gearbox" = c("am", "gear")),
                format_to = "Console")
 # Note that Variable qsec is not blocked and thus not indented.
+
+
+
+# add_margins
+atable::atable(atable::test_data,
+               target_cols = "Numeric",
+               group_col = "Group",
+               split_cols = "Split1",
+               add_margins = TRUE,
+               format_to = "Console")
+# The column 'Total' contains the results of the ungrouped atable-call:
+# The number of observations is the sum of observations of the groups.
+# The default of add_margins can be changed via atable_options.
+
 }

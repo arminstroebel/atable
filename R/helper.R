@@ -570,12 +570,6 @@ indent_data_frame_with_blocks = function(DD, blocks, character_empty = "", numer
 {
 
 
-  # xxx input chekcen
-  # stopifnot(is.data.frame(DD), is.character(keys), is.character(values), keys %in%
-  #             colnames(DD), values %in% colnames(DD), anyDuplicated(c(keys, values, colname_indent)) ==
-  #             0)
-
-
 
 
   stopifnot(!is.null(blocks))
@@ -595,8 +589,6 @@ indent_data_frame_with_blocks = function(DD, blocks, character_empty = "", numer
 
   bb = doBy::renameCol(bb, "block_name", atable_options("colname_for_blocks"))
 
-  # xxx the_block_name in atable_options
-  # xxx naming conflict: the_block_name schon eine Spalte von DD. stopifnot
   the_block_name = atable_options("colname_for_blocks")
   if(the_block_name %in% colnames(DD)){stop(the_block_name , " already in the data.
                                             Consider changing the data or atable_options('colname_for_blocks')")}
@@ -607,7 +599,7 @@ indent_data_frame_with_blocks = function(DD, blocks, character_empty = "", numer
              all.x = TRUE) # merge with blocks
 
   # order with blocks
-  ff <- c(atable_options("colname_for_variable"), the_block_name)
+  ff <- c(atable_options("colname_for_variable"), the_block_name, "tag")
   ff <- stats::as.formula(paste("~", paste(ff, collapse = "+"), collapse = ""))
 
   DD <- doBy::orderBy(ff, DD)

@@ -4,7 +4,8 @@
 \name{standardized_test_data}
 \alias{standardized_test_data}
 \title{A data.frame with standardized random data of various classes}
-\format{A data frame with 1080 rows and 7 variables:
+\format{
+A data frame with 1080 rows and 7 variables:
 \describe{
   \item{Split1}{A factor with 2 levels without \code{NA}. The two levels have the same frequency (540).}
   \item{Split2}{A factor with 2 levels with \code{NA}. The two levels and the \code{NA} have the same frequency (360).}
@@ -14,7 +15,8 @@
   \item{Ordered}{Class ordered with 4 levels.}
   \item{Numeric}{Class numeric.}
 
-}}
+}
+}
 \usage{
 standardized_test_data
 }
