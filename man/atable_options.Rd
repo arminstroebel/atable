@@ -133,6 +133,9 @@ The following options are supported:
    \item{\code{modifiy_colnames_without_alias}}{: A function with one argument \code{x} and \code{...} returning a character.
    This functions is called by \code{create_alias_mapping} on the columns that have \code{is.NULL(get_alias(x))}.
    Replaces underscores by blanks and then calls \code{\link[base]{trimws}}. }
+
+   \item{\code{indent_character}}{: A Character with length 1. Passed to \code{indent_data_frame}. Every option of \code{format_to}
+   has a corresponding indent_character. See the help of \code{atable} for these options. }
 }
 }
 

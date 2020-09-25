@@ -455,3 +455,20 @@ test_that("add_margins", {
   )
 
 })
+
+
+test_that("indent_character", {
+
+  check_indent_character = function(x){grepl(pattern = x,
+                                             x = atable::atable(datasets::ToothGrowth,
+                                                                target_cols = 'len',
+                                                                group_col = 'supp',
+                                                                split_cols = 'dose',
+                                                                indent_character = x)[1])
+  }
+
+
+  expect_true(check_indent_character("asdf"))
+  expect_true(check_indent_character("qwer"))
+
+})

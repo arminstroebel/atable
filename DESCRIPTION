@@ -1,7 +1,7 @@
 Package: atable
 Type: Package
 Title: Create Tables for Reporting Clinical Trials
-Version: 0.1.8
+Version: 0.1.9
 Author: Armin Ströbel [aut, cre] (<https://orcid.org/0000-0002-6873-5332>),
   Alan Haynes [aut] (<https://orcid.org/0000-0003-1374-081X>)
 Maintainer: Armin Ströbel <arminstroebel@web.de>

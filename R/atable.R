@@ -59,6 +59,10 @@
 #' \code{group_col} is not \code{NULL}, a column containing the results of an ungrouped \code{atable}-call is added to
 #'  the results. See Examples.
 #'
+#' @param indent_character A character with length 1 or \code{NULL} (default). This character is used for indentation in the resulting
+#'   table. If \code{NULL}, then the value stored in \code{\link{atable_options}} is taken instead, depending on \code{format_to}.
+#'  \code{\link{indent_data_frame}} does the indentation. See help there.
+#'
 #' @param ... Passed from and to other methods. You can use the ellipsis ... to modify atable:
 #' For example the default-statistics for numeric variables are mean and sd. To change these statistics pass
 #' a function to argument \code{statistics.numeric}, that calculates the statistics you prefer for your data.
@@ -68,7 +72,7 @@
 #' Actually \code{statistics.numeric} is passed to \code{\link{statistics}} and thus documented there,
 #' but for convenience it also documented here.
 #'
-#' Here is a list of the statistics and hypothesis tests that can be modfied by \code{...} :
+#' Here is a list of the statistics and hypothesis tests that can be modified by \code{...} :
 #' \itemize{
 #'   \item{\code{statistics.numeric}}{: Either \code{NULL} or a function. Default is \code{NULL}.
 #'   If a function, then it will replace \code{atable:::statistics.numeric} when atable is called.
@@ -230,7 +234,7 @@ atable <- function(x, ...) {
 #' @describeIn atable applies descriptive statistics and hypothesis tests, arranges the results for printing.
 atable.data.frame <- function(x, target_cols, group_col = NULL, split_cols = NULL,
     format_to = atable_options("format_to"), drop_levels = TRUE, add_levels_for_NA = FALSE, blocks = NULL,
-    add_margins = atable_options("add_margins"), ...) {
+    add_margins = atable_options("add_margins"), indent_character = NULL, ...) {
 
     format_to <- switch(format_to, Latex = "Latex", latex = "Latex", Word = "Word",
         word = "Word", HTML = "HTML", html = "HTML", Console = "Console", console = "Console",
@@ -315,18 +319,18 @@ atable.data.frame <- function(x, target_cols, group_col = NULL, split_cols = NUL
     result <- if (is.null(group_col)) {
         if (is.null(split_cols)) {
             atable_unsplitted_ungrouped(DD = DD, target_cols = target_cols, format_to = format_to,
-                Alias_mapping = Alias_mapping, blocks = blocks, ...)
+                Alias_mapping = Alias_mapping, blocks = blocks, indent_character = indent_character, ...)
         } else {
             atable_splitted_ungrouped(DD = DD, target_cols = target_cols, split_cols = split_cols,
-                Alias_mapping = Alias_mapping, blocks = blocks, format_to = format_to, ...)
+                Alias_mapping = Alias_mapping, blocks = blocks, format_to = format_to, indent_character = indent_character, ...)
         }
     } else {
         if (is.null(split_cols)) {
             atable_unsplitted_grouped(DD = DD, target_cols = target_cols, group_col = group_col,
-                Alias_mapping = Alias_mapping, split_cols = split_cols, format_to = format_to, blocks = blocks, ...)
+                Alias_mapping = Alias_mapping, split_cols = split_cols, format_to = format_to, blocks = blocks, indent_character = indent_character, ...)
         } else {
             atable_splitted_grouped(DD = DD, target_cols = target_cols, group_col = group_col,
-                split_cols = split_cols, format_to = format_to, Alias_mapping = Alias_mapping, blocks = blocks, ...)
+                split_cols = split_cols, format_to = format_to, Alias_mapping = Alias_mapping, blocks = blocks, indent_character = indent_character, ...)
         }
     }
 
@@ -347,7 +351,7 @@ atable.data.frame <- function(x, target_cols, group_col = NULL, split_cols = NUL
     result <- if(isTRUE(add_margins) & !is.null(group_col)){
       tab_no_group <- atable(x = x, target_cols = target_cols, group_col = NULL, split_cols = split_cols,
              format_to = format_to, drop_levels = drop_levels, add_levels_for_NA = add_levels_for_NA, blocks = blocks,
-             ...)
+             indent_character = indent_character, ...)
 
       stopifnot(identical(tab_no_group[[atable::atable_options("colname_for_group")]],
                 result[[atable::atable_options("colname_for_group")]]))

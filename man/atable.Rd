@@ -18,6 +18,7 @@ atable(x, ...)
   add_levels_for_NA = FALSE,
   blocks = NULL,
   add_margins = atable_options("add_margins"),
+  indent_character = NULL,
   ...
 )
 
@@ -37,7 +38,7 @@ See examples below how to modify atable by ... .
 Actually \code{statistics.numeric} is passed to \code{\link{statistics}} and thus documented there,
 but for convenience it also documented here.
 
-Here is a list of the statistics and hypothesis tests that can be modfied by \code{...} :
+Here is a list of the statistics and hypothesis tests that can be modified by \code{...} :
 \itemize{
   \item{\code{statistics.numeric}}{: Either \code{NULL} or a function. Default is \code{NULL}.
   If a function, then it will replace \code{atable:::statistics.numeric} when atable is called.
@@ -123,6 +124,10 @@ Blocking has no effect on the statistics, it only affects the indentation of the
 in \code{\link{atable_options}} as \code{FALSE}. When \code{add_margins} is \code{TRUE} and
 \code{group_col} is not \code{NULL}, a column containing the results of an ungrouped \code{atable}-call is added to
  the results. See Examples.}
+
+\item{indent_character}{A character with length 1 or \code{NULL} (default). This character is used for indentation in the resulting
+ table. If \code{NULL}, then the value stored in \code{\link{atable_options}} is taken instead, depending on \code{format_to}.
+\code{\link{indent_data_frame}} does the indentation. See help there.}
 
 \item{formula}{A formula of the form \code{target_cols ~ group_col | split_cols}.
 The \code{|} separates the \code{group_col} from the \code{split_cols}.
