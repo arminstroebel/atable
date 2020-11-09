@@ -63,6 +63,10 @@
 #'   table. If \code{NULL}, then the value stored in \code{\link{atable_options}} is taken instead, depending on \code{format_to}.
 #'  \code{\link{indent_data_frame}} does the indentation. See help there.
 #'
+#'  @param indent indent A logical with length one, \code{TRUE} or \code{FALSE}. Default is defined
+#' in \code{\link{atable_options}}. Decides if indentation is done or not. The resulting table will have a different layout.
+#' If FALSE, then \code{blocks} is ignored.
+#'
 #' @param ... Passed from and to other methods. You can use the ellipsis ... to modify atable:
 #' For example the default-statistics for numeric variables are mean and sd. To change these statistics pass
 #' a function to argument \code{statistics.numeric}, that calculates the statistics you prefer for your data.
@@ -234,7 +238,7 @@ atable <- function(x, ...) {
 #' @describeIn atable applies descriptive statistics and hypothesis tests, arranges the results for printing.
 atable.data.frame <- function(x, target_cols, group_col = NULL, split_cols = NULL,
     format_to = atable_options("format_to"), drop_levels = TRUE, add_levels_for_NA = FALSE, blocks = NULL,
-    add_margins = atable_options("add_margins"), indent_character = NULL, ...) {
+    add_margins = atable_options("add_margins"), indent_character = NULL, indent = atable_options("indent"), ...) {
 
     format_to <- switch(format_to, Latex = "Latex", latex = "Latex", Word = "Word",
         word = "Word", HTML = "HTML", html = "HTML", Console = "Console", console = "Console",
@@ -319,18 +323,18 @@ atable.data.frame <- function(x, target_cols, group_col = NULL, split_cols = NUL
     result <- if (is.null(group_col)) {
         if (is.null(split_cols)) {
             atable_unsplitted_ungrouped(DD = DD, target_cols = target_cols, format_to = format_to,
-                Alias_mapping = Alias_mapping, blocks = blocks, indent_character = indent_character, ...)
+                Alias_mapping = Alias_mapping, blocks = blocks, indent_character = indent_character, indent = indent, ...)
         } else {
             atable_splitted_ungrouped(DD = DD, target_cols = target_cols, split_cols = split_cols,
-                Alias_mapping = Alias_mapping, blocks = blocks, format_to = format_to, indent_character = indent_character, ...)
+                Alias_mapping = Alias_mapping, blocks = blocks, format_to = format_to, indent_character = indent_character, indent = indent, ...)
         }
     } else {
         if (is.null(split_cols)) {
             atable_unsplitted_grouped(DD = DD, target_cols = target_cols, group_col = group_col,
-                Alias_mapping = Alias_mapping, split_cols = split_cols, format_to = format_to, blocks = blocks, indent_character = indent_character, ...)
+                Alias_mapping = Alias_mapping, split_cols = split_cols, format_to = format_to, blocks = blocks, indent_character = indent_character, indent = indent, ...)
         } else {
             atable_splitted_grouped(DD = DD, target_cols = target_cols, group_col = group_col,
-                split_cols = split_cols, format_to = format_to, Alias_mapping = Alias_mapping, blocks = blocks, indent_character = indent_character, ...)
+                split_cols = split_cols, format_to = format_to, Alias_mapping = Alias_mapping, blocks = blocks, indent_character = indent_character, indent = indent, ...)
         }
     }
 
@@ -351,23 +355,33 @@ atable.data.frame <- function(x, target_cols, group_col = NULL, split_cols = NUL
     result <- if(isTRUE(add_margins) & !is.null(group_col)){
       tab_no_group <- atable(x = x, target_cols = target_cols, group_col = NULL, split_cols = split_cols,
              format_to = format_to, drop_levels = drop_levels, add_levels_for_NA = add_levels_for_NA, blocks = blocks,
-             indent_character = indent_character, ...)
+             indent_character = indent_character, indent = indent, ...)
+
+
 
       stopifnot(identical(tab_no_group[[atable::atable_options("colname_for_group")]],
                 result[[atable::atable_options("colname_for_group")]]))
 
-
-
       tab_no_group <- doBy::renameCol(tab_no_group,
-                                     atable::atable_options("colname_for_value"),
-                                     atable::atable_options("colname_for_total")
+                                      atable::atable_options("colname_for_value"),
+                                      atable::atable_options("colname_for_total")
       )
+
+      if(!isTRUE(indent)){
+        # indent_data_frame was not called. So number of columns are different. ID-variables are not all in the first columns
+        tab_with_margin = merge(tab_no_group, result, sort=FALSE)
+        class(tab_with_margin) <- class(result)
+        tab_with_margin
+      }else{
+
+
 
 
       tab_with_margin <- cbind(tab_no_group, result[-1])
-      class(tab_with_margin) <- class(result) # the cbind does not kno class "atable" and dispatches to data.frame.
+      class(tab_with_margin) <- class(result) # the cbind does not know class "atable" and dispatches to data.frame.
 
       tab_with_margin
+      }
 
 
     } else {result}

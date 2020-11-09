@@ -69,7 +69,69 @@ MYPKGOPTIONS <- settings::options_manager(
   indent_character_Latex = "\\quad",
   indent_character_HTML = " &emsp; ",
   indent_character_Console = "    ",
-  indent_character_markdown = "&nbsp;&nbsp;&nbsp;&nbsp;"
+  indent_character_markdown = "&nbsp;&nbsp;&nbsp;&nbsp;",
+  indent = TRUE,
+
+  format_statistics_compact.statistics_factor = function(x, ...)
+  {
+
+    nn <- names(x)
+
+    value <- unlist(x)
+    total <- sum(value)
+
+
+    percent <- 100 * value/total
+
+    if(length(nn)<=3){
+      # return only first level, ignore the others
+      # As atable::statistics.factor calls table(..., useNA='always'), there is always NA in nn and thus three
+      # levels are the minimum, not two levels
+      # The counts of missing values will not be displayed, but are included in the percent
+
+      value <- paste0(atable_options("format_percent")(percent[1]), "% (", atable_options("format_numbers")(value[1]), ")")
+
+
+      format_statistics_out <- data.frame(tag = factor(nn[1], levels = nn[1]), value = value[1],
+                                          row.names = NULL, stringsAsFactors = FALSE, check.names = FALSE, fix.empty.names = FALSE)
+
+      return(format_statistics_out)
+    }
+    else{
+      # paste everything in one line
+
+      value <- paste0(atable_options("format_percent")(percent), "% (", atable_options("format_numbers")(value), ")")
+
+      value = paste(value, collapse = ", ")
+      nn = paste(nn, collapse = ", ")
+
+      format_statistics_out <- data.frame(tag = factor(nn, levels = nn), value = value,
+                                          row.names = NULL, stringsAsFactors = FALSE, check.names = FALSE, fix.empty.names = FALSE)
+
+      return(format_statistics_out)
+    }
+  },
+
+  format_statistics_compact.statistics_numeric = function(x, ...)
+  {
+
+    the_mean <- atable_options("format_numbers")(x$mean)
+    the_sd <- atable_options("format_numbers")(x$sd)
+
+    # paste everything in one line
+    values <- c(Mean_SD = paste0(the_mean,
+                                 " (",
+                                 the_sd,
+                                 ")"))
+
+
+    format_statistics_out <- data.frame(tag = factor(names(values), levels = names(values)),
+                                        value = values, row.names = NULL, stringsAsFactors = FALSE, check.names = FALSE,
+                                        fix.empty.names = FALSE)
+
+    return(format_statistics_out)
+
+  }
 
 
 )
@@ -202,6 +264,17 @@ MYPKGOPTIONS <- settings::options_manager(
 #'
 #'    \item{\code{indent_character}}{: A Character with length 1. Passed to \code{indent_data_frame}. Every option of \code{format_to}
 #'    has a corresponding indent_character. See the help of \code{atable} for these options. }
+#'
+#'
+#'  \item{\code{indent}}{: A logical with length 1. Passed to \code{atable}. Controls, if indent_data_frame is called.}
+#'
+#'
+#'    \item{\code{format_statistics_compact.statistics_factor}}{: A function with the same Properties as \code{\link{format_statistics}}. Used as a
+#'    default value for \code{\link{atable_compact}}}
+#'
+#'    \item{\code{format_statistics_compact.statistics_numeric }}{: A function with the same Properties as \code{\link{format_statistics}}. Used as a
+#'    default value for \code{\link{atable_compact}}}
+#'
 #' }
 #'
 #' @examples

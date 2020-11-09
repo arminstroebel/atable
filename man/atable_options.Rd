@@ -136,6 +136,15 @@ The following options are supported:
 
    \item{\code{indent_character}}{: A Character with length 1. Passed to \code{indent_data_frame}. Every option of \code{format_to}
    has a corresponding indent_character. See the help of \code{atable} for these options. }
+
+
+
+   \item{\code{format_statistics_compact.statistics_factor}}{: A function with the same Properties as \code{\link{format_statistics}}. Used as a
+   default value for \code{\link{atable_compact}}}
+
+   \item{\code{format_statistics_compact.statistics_numeric }}{: A function with the same Properties as \code{\link{format_statistics}}. Used as a
+   default value for \code{\link{atable_compact}}}
+
 }
 }
 

@@ -19,6 +19,7 @@ atable(x, ...)
   blocks = NULL,
   add_margins = atable_options("add_margins"),
   indent_character = NULL,
+  indent = atable_options("indent"),
   ...
 )
 
@@ -126,8 +127,12 @@ in \code{\link{atable_options}} as \code{FALSE}. When \code{add_margins} is \cod
  the results. See Examples.}
 
 \item{indent_character}{A character with length 1 or \code{NULL} (default). This character is used for indentation in the resulting
- table. If \code{NULL}, then the value stored in \code{\link{atable_options}} is taken instead, depending on \code{format_to}.
-\code{\link{indent_data_frame}} does the indentation. See help there.}
+  table. If \code{NULL}, then the value stored in \code{\link{atable_options}} is taken instead, depending on \code{format_to}.
+ \code{\link{indent_data_frame}} does the indentation. See help there.
+
+ @param indent indent A logical with length one, \code{TRUE} or \code{FALSE}. Default is defined
+in \code{\link{atable_options}}. Decides if indentation is done or not. The resulting table will have a different layout.
+If FALSE, then \code{blocks} is ignored.}
 
 \item{formula}{A formula of the form \code{target_cols ~ group_col | split_cols}.
 The \code{|} separates the \code{group_col} from the \code{split_cols}.

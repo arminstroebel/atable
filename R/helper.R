@@ -275,15 +275,15 @@ format_statistics_caller <- function(x, cols, ...) {
 }
 
 arrange_statistics <- function(formated_statistics_result, split_cols, format_to,
-    Alias_mapping, blocks, indent_character) {
+    Alias_mapping, blocks, indent_character, indent) {
     formated_statistics_result <- replace_NA(formated_statistics_result)
 
-    return(arrange_helper(formated_statistics_result, split_cols, format_to, Alias_mapping, blocks, indent_character))
+    return(arrange_helper(formated_statistics_result, split_cols, format_to, Alias_mapping, blocks, indent_character, indent))
 }
 
 
 arrange_statistics_and_tests <- function(formated_statistics_result, formated_tests_result,
-    group_col, split_cols, format_to, Alias_mapping, blocks, indent_character) {
+    group_col, split_cols, format_to, Alias_mapping, blocks, indent_character, indent) {
     formated_statistics_result <- replace_NA(formated_statistics_result)
 
 
@@ -348,10 +348,11 @@ arrange_statistics_and_tests <- function(formated_statistics_result, formated_te
         })
 
 
-    return(arrange_helper(tabr, split_cols, format_to, Alias_mapping, blocks, indent_character))
+    return(arrange_helper(tabr, split_cols, format_to, Alias_mapping, blocks, indent_character, indent))
 }
 
-arrange_helper <- function(tab, split_cols, format_to, Alias_mapping, blocks, indent_character) {
+arrange_helper <- function(tab, split_cols, format_to, Alias_mapping, blocks, indent_character, indent) {
+
 
 
     # map cols and blocks to aliases
@@ -365,35 +366,41 @@ arrange_helper <- function(tab, split_cols, format_to, Alias_mapping, blocks, in
              warn_missing = FALSE)}
     else{blocks}
 
-    switch(format_to, Word = {
-      indent_character = if(is.null(indent_character)){atable_options("indent_character_Word")}else{indent_character}
 
-      tab <- indent_data_frame_helper(DD = tab,
-                                      split_cols = split_cols,
-                                      blocks = blocks,
-                                      indent_character = indent_character)
-      return(tab)
-    }, Latex = {
-      indent_character = if(is.null(indent_character)){atable_options("indent_character_Latex")}else{indent_character}
+
+    if(isTRUE(indent)){
+
+
+      switch(format_to, Word = {
+        indent_character = if(is.null(indent_character)){atable_options("indent_character_Word")}else{indent_character}
+
+        tab <- indent_data_frame_helper(DD = tab,
+                                        split_cols = split_cols,
+                                        blocks = blocks,
+                                        indent_character = indent_character)
+        return(tab)
+      }, Latex = {
+        indent_character = if(is.null(indent_character)){atable_options("indent_character_Latex")}else{indent_character}
 
         # the order is important: translate_to_LaTeX may change the colnames of tab. So
         # it is applied second.
         tab <- indent_data_frame_helper(DD = tab,
-                                       split_cols = split_cols,
-                                       blocks = blocks,
-                                       indent_character = indent_character)
+                                        split_cols = split_cols,
+                                        blocks = blocks,
+                                        indent_character = indent_character)
         tab <- translate_to_LaTeX(tab)
+
         return(tab)
-    }, HTML = {
-      indent_character = if(is.null(indent_character)){atable_options("indent_character_HTML")}else{indent_character}
+      }, HTML = {
+        indent_character = if(is.null(indent_character)){atable_options("indent_character_HTML")}else{indent_character}
 
         tab <- indent_data_frame_helper(DD = tab,
-                                       split_cols = split_cols,
-                                       blocks = blocks,
-                                       indent_character = indent_character)
+                                        split_cols = split_cols,
+                                        blocks = blocks,
+                                        indent_character = indent_character)
         return(tab)
-    }, Console = {
-      indent_character = if(is.null(indent_character)){atable_options("indent_character_Console")}else{indent_character}
+      }, Console = {
+        indent_character = if(is.null(indent_character)){atable_options("indent_character_Console")}else{indent_character}
 
         tab <- indent_data_frame_helper(DD = tab,
                                         split_cols = split_cols,
@@ -404,18 +411,38 @@ arrange_helper <- function(tab, split_cols, format_to, Alias_mapping, blocks, in
         class(tab) <- c("atable", class(tab))
 
         return(tab)
-    }, markdown = {
-      indent_character = if(is.null(indent_character)){atable_options("indent_character_markdown")}else{indent_character}
+      }, markdown = {
+        indent_character = if(is.null(indent_character)){atable_options("indent_character_markdown")}else{indent_character}
 
         tab <- indent_data_frame_helper(DD = tab,
                                         split_cols = split_cols,
                                         blocks = blocks,
                                         indent_character = indent_character)
         return(tab)
-    },
-    {
+      },
+      {
         stop("format_to ", format_to, " unknown.")
-    })
+      })
+
+    }else{
+
+      # no indent. thus no blocking. compact atable requested.
+      switch(format_to,
+             Console = {
+               class(tab) <- c("atable", class(tab))
+               return(tab)},
+             Latex = {
+               tab <- translate_to_LaTeX(tab)
+               return(tab)
+             },
+             {
+               return(tab)
+             })
+
+    }
+
+
+
 }
 
 #' @export
@@ -423,7 +450,7 @@ print.atable <- function(x, ...) print(as.data.frame(x), right = FALSE, ...)
 
 
 atable_splitted_grouped <- function(DD, target_cols, group_col, split_cols, format_to,
-    Alias_mapping, blocks, indent_character, ...) {
+    Alias_mapping, blocks, indent_character, indent, ...) {
 
     Observation_and_target_cols <- c(atable_options("colname_for_observations"),
         target_cols)
@@ -448,12 +475,12 @@ atable_splitted_grouped <- function(DD, target_cols, group_col, split_cols, form
 
 
     atable_result <- arrange_statistics_and_tests(formated_statistics_result, formated_tests_result,
-        group_col, split_cols, format_to, Alias_mapping, blocks, indent_character)
+        group_col, split_cols, format_to, Alias_mapping, blocks, indent_character, indent)
     return(atable_result)
 }
 
 atable_unsplitted_grouped <- function(DD, target_cols, group_col, split_cols, format_to,
-    Alias_mapping, blocks, indent_character, ...) {
+    Alias_mapping, blocks, indent_character, indent, ...) {
 
     Observation_and_target_cols <- c(atable_options("colname_for_observations"),
         target_cols)
@@ -476,11 +503,11 @@ atable_unsplitted_grouped <- function(DD, target_cols, group_col, split_cols, fo
         ...)
 
     atable_result <- arrange_statistics_and_tests(formated_statistics_result, formated_tests_result,
-        group_col, split_cols, format_to, Alias_mapping, blocks, indent_character)
+        group_col, split_cols, format_to, Alias_mapping, blocks, indent_character, indent)
     return(atable_result)
 }
 
-atable_splitted_ungrouped <- function(DD, target_cols, split_cols, format_to, Alias_mapping, blocks, indent_character,
+atable_splitted_ungrouped <- function(DD, target_cols, split_cols, format_to, Alias_mapping, blocks, indent_character, indent,
     ...) {
 
     Observation_and_target_cols <- c(atable_options("colname_for_observations"),
@@ -498,13 +525,13 @@ atable_splitted_ungrouped <- function(DD, target_cols, split_cols, format_to, Al
         cols = Observation_and_target_cols, ...)
 
     atable_result <- arrange_statistics(formated_statistics_result, split_cols, format_to,
-        Alias_mapping, blocks, indent_character)
+        Alias_mapping, blocks, indent_character, indent)
 
 
     return(atable_result)
 }
 
-atable_unsplitted_ungrouped <- function(DD, target_cols, format_to, Alias_mapping, blocks, indent_character,
+atable_unsplitted_ungrouped <- function(DD, target_cols, format_to, Alias_mapping, blocks, indent_character, indent,
     ...) {
 
     Observation_and_target_cols <- c(atable_options("colname_for_observations"),
@@ -526,7 +553,7 @@ atable_unsplitted_ungrouped <- function(DD, target_cols, format_to, Alias_mappin
     split_cols <- NULL  # i do not want to write another helper function.
     # Just use arrange_statistics, which uses split_cols.
     atable_result <- arrange_statistics(formated_statistics_result, split_cols, format_to,
-        Alias_mapping, blocks, indent_character)
+        Alias_mapping, blocks, indent_character, indent)
     return(atable_result)
 }
 
@@ -757,3 +784,6 @@ check_blocks <- function(blocks, target_cols)
   })
   return(TRUE)
 }
+
+
+
