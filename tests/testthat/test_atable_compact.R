@@ -2,7 +2,7 @@ context("atable_compact")
 library(atable)
 
 
-
+DD = atable::test_data
 
 target_cols = c("Numeric", "Factor", "Split2") # Split2 has tow levels. So
 a = atable_compact(DD,
