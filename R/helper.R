@@ -425,21 +425,7 @@ arrange_helper <- function(tab, split_cols, format_to, Alias_mapping, blocks, in
       })
 
     }else{
-
-      # no indent. thus no blocking. compact atable requested.
-      switch(format_to,
-             Console = {
-               class(tab) <- c("atable", class(tab))
-               return(tab)},
-             Latex = {
-               tab <- translate_to_LaTeX(tab)
-               return(tab)
-             },
-             {
-               return(tab)
-             })
-
-    }
+      return(tab)}
 
 
 
@@ -787,3 +773,188 @@ check_blocks <- function(blocks, target_cols)
 
 
 
+format_compact_numeric = function(x,...)
+{
+
+  the_mean <- atable_options("format_numbers")(x$mean)
+  the_sd <- atable_options("format_numbers")(x$sd)
+
+  values <- c(Mean_SD = paste0(the_mean, " (", the_sd, ")") )
+
+  format_statistics_out <- data.frame(tag = factor("remove_me", levels = "remove_me"),
+                                      value = values, row.names = NULL, stringsAsFactors = FALSE, check.names = FALSE,
+                                      fix.empty.names = FALSE)
+
+  return(format_statistics_out)
+
+}
+
+
+format_compact_factor = function(x,...)
+{
+
+  nn <- names(x)
+
+  value <- unlist(x)
+  total <- sum(value)
+
+
+  percent <- 100 * value/total
+
+  if(length(nn)<=3){
+    # return only first level, ignore the others
+    # As atable::statistics.factor calls table(..., useNA='always'), there is always NA in nn and thus three
+    # levels are the minimum, not two levels
+    # The counts of missing values will not be displayed, but are included in the percent-calculation
+
+    value <- paste0(atable_options("format_percent")(percent[1]), "% (", atable_options("format_numbers")(value[1]), ")")
+
+
+    format_statistics_out <- data.frame(tag = factor(nn[1], levels = nn[1]), value = value[1],
+                                        row.names = NULL, stringsAsFactors = FALSE, check.names = FALSE, fix.empty.names = FALSE)
+
+    return(format_statistics_out)
+  }  else{
+
+
+    value <- paste0(atable_options("format_percent")(percent), "% (", atable_options("format_numbers")(value), ")")
+
+
+
+    format_statistics_out <- data.frame(tag = factor(nn, levels = nn),
+                                        value = value,
+                                        row.names = NULL, stringsAsFactors = FALSE, check.names = FALSE, fix.empty.names = FALSE)
+
+    return(format_statistics_out)
+  }
+}
+
+
+indent_tag_value = function(x, indent_character)
+{
+
+  stopifnot(
+    is.data.frame(x),
+    # all(sapply(x, is.character)),
+    nrow(x)>=1,
+    ncol(x)>=2
+  )
+
+  x[] = lapply(x, as.character)
+
+  index_variable = which(colnames(x) == atable_options("colname_for_variable") )
+  index_tag = which(colnames(x) == "tag")
+
+  stopifnot(index_variable>0,
+            index_tag==index_variable+1)
+
+  stopifnot(
+    is.character(indent_character),
+    length(indent_character)==1
+  )
+
+  # vorher:
+  # variable | tag
+  # nachher
+  # variable
+
+  if(nrow(x)==1)
+  {
+    # format_compact_numeric returns a data.frame wite nrow=1 and sets tag="remove_me"
+    # format_compact_factor may also return a data.frame wite nrow=1, but without tag="remove_me"
+
+    if(x$tag=="remove_me"){
+
+      out = x[-index_tag]
+      return(out)
+    }
+    else{
+      out = x[-index_variable]
+      colnames(out)[index_variable] = atable_options("colname_for_variable")
+      return(out)
+    }
+
+  }
+
+  # create an empty line an rbind it on top. Keep blocking-column if available.
+
+  empty_headline = x[1, -index_tag]
+  empty_headline[1,index_variable:ncol(empty_headline)]=NA
+  # set name of heading
+  empty_headline[1,index_variable] = x[1,index_variable]
+  # set block name of heading if available
+  empty_headline = if(atable_options("colname_for_blocks") %in% colnames(empty_headline))
+  {
+    empty_headline[[atable_options("colname_for_blocks") ]] = x[1, atable_options("colname_for_blocks") ]
+    empty_headline
+
+  }else{empty_headline}
+
+  indent = x
+  indent[ ,index_variable] = paste(indent_character, indent[,index_tag])
+  indent = indent[-index_tag]
+
+  out = rbind(empty_headline, indent,
+              stringsAsFactors = FALSE)
+
+  return(out)
+
+}
+
+fill_blocks = function(x)
+{
+  # replaces NA in a vector x with "no_blocking___1", "no_blocking___2", "no_blocking___3",...
+  # 1,2,3 counts the connected components of NA in x
+  # x=c(NA, NA, NA, "a","a", NA, NA, "b", "b", NA)
+  # fill_blocks(x)
+
+  block_prefix = "no_blocking___"
+  x
+  y=x
+  index=1
+
+  if(is.na(x[1])) {y[1] = paste0(block_prefix, index) }
+
+  for(i in 2:length(x))
+  {
+    if(is.na(x[i]) ){y[i] = paste0(block_prefix, index) }
+    else{
+      if(is.na(x[i-1])){index = index + 1}
+    }
+  }
+
+  return(y)
+}
+
+
+indent_blocks = function(DD, indent_character)
+{
+
+  stopifnot(colnames(DD)[1] == atable_options("colname_for_blocks"))
+
+  DD$block_name___ = fill_blocks(DD$block_name___)
+
+  DD$block_name___ = factor(DD$block_name___,
+                            levels = DD$block_name___[!duplicated(DD$block_name___)])
+
+
+
+  Block_indent = plyr::ddply(DD,
+                             atable_options("colname_for_blocks"),
+                             function(x){
+                               if( substr(x[[atable_options("colname_for_blocks")]][1] , 1,14) == "no_blocking___" )  {return(x)}
+                               empty = x[1, 2:ncol(x)]
+                               empty[1,1] = as.character(x[1,1])
+                               empty[1, 2:ncol(empty)]=NA
+
+                               x[,2] = paste(indent_character, x[,2])
+
+                               rbind(empty,
+                                     x[, 2:ncol(x)],
+                                     stringsAsFactors = FALSE)
+                             })
+
+  return(Block_indent[-1])
+
+
+}

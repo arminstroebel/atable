@@ -555,6 +555,86 @@ Table \ref{tab:addedDate} shows the application the new methods for class Date. 
 
 Adding new user-defined methods to atable (as described above) can introduce errors to the code. To prevent some of these possible errors, functions that check the results of \verb|statistics| and \verb|format_statistics| etc.\ were implemented in atable; these function are called \verb|check_...|. Also the user is advised to read the documentation of the generic that she/he wants to modify.
 
+\section{Modified atable}
+
+The package contains modifications of atable.
+
+\subsection{atable compact}
+\verb|atable_compact| is a wrapper for \verb|atable|, calculating the same statistics, but with different formating functions.
+The intention of \verb|atable_compact| is to produce tables like in \cite{Lenze2020} table 1 and 2. See table \ref{tab:atable compact} for an example.
+
+<<atable compact, echo=TRUE, results='asis'>>=
+
+atable_options_reset()
+
+
+tab = atable_compact(atable::test_data,
+                     target_cols = c("Numeric", "Numeric2", "Split2", "Factor",
+                                     "Ordered"),
+                     group_col = "Group2",
+                     blocks = list("Primary Endpoint" = "Numeric",
+                                   "Secondary  Endpoint" = c("Numeric2", "Split2")),
+                     indent_character = "\\quad")
+
+tab = atable::translate_to_LaTeX(tab)
+
+Hmisc::latex(tab,
+             file = "",
+             title = "",
+             label = "tab:atable compact",
+             caption = Hmisc::latexTranslate("atable compact. The data.frame is
+             grouped by group_col and the summary statistcs of the target_cols
+             are calculated: mean, sd for numeric, counts and percentages for
+             factors. The target_cols are blocked: the first block 'Primary Endpoint'
+             contains the variable Numeric. The second block 'Secondary  Endpoint'
+             contains the variables 'Numeric2' and 'Split2'. The blocks are
+             intended. For variable Split2 only its first level 'b' is reported, as
+             the variable has only two levels and the name 'Split2' does not appear
+             in the table. The variables Factor and Ordered have more than two levels,
+             so all of them are reported and appropriately intended."),
+             caption.lot = "atable compact",
+             rowname = NULL)
+
+@
+
+\subsection{atable longitudinal}
+
+\verb|atable_longitudinal| is a wrapper for atable(), calculating the same statistics, but with different format.
+
+The intention is to report longitudinal data, i.e. data measured on the same objects on multiple times points. See table~\ref{atable longitudinal} for an example.
+
+
+<<atable longitudinal, echo=TRUE, results='asis'>>=
+
+x = atable::test_data
+
+# create timepoint of measurement
+set.seed(42)
+x = within(x, {time = sample(paste0("time_", 1:6), size=nrow(x), replace = TRUE)})
+
+tab = atable_longitudinal(x,
+       target_cols = "Split2",
+       group_col = "Group2",
+       split_cols = "time",
+       add_margins = TRUE)
+
+tab = atable::translate_to_LaTeX(tab)
+
+Hmisc::latex(tab,
+             file = "",
+             title = "",
+             label = "tab:atable longitudinal",
+             caption = Hmisc::latexTranslate("atable longitudinal. Table shows
+             statistics of variable Split2 measured at six time points in in three
+             groups and the p-values for a comparison of the groups. The name of
+             the variable 'Split2' does not show up in the table, so the user should
+             add it to the caption of the table. Also only statistics of the first
+             level of 'Split2' are shown, as 'Split2' has only two levels.
+             Format of the statistics is percent % (n/total)."),
+             caption.lot = "atable longitudinal",
+             rowname = NULL)
+
+@
 
 
 % \section{References}

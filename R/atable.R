@@ -63,7 +63,7 @@
 #'   table. If \code{NULL}, then the value stored in \code{\link{atable_options}} is taken instead, depending on \code{format_to}.
 #'  \code{\link{indent_data_frame}} does the indentation. See help there.
 #'
-#'  @param indent indent A logical with length one, \code{TRUE} or \code{FALSE}. Default is defined
+#' @param indent A logical with length one, \code{TRUE} or \code{FALSE}. Default is defined
 #' in \code{\link{atable_options}}. Decides if indentation is done or not. The resulting table will have a different layout.
 #' If FALSE, then \code{blocks} is ignored.
 #'

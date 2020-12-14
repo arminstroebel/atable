@@ -70,6 +70,9 @@ The following options are supported:
   This character shows up in the results of \code{\link{atable}} when \code{group_col} is \code{NULL}.
   The column will contain the results of the \code{\link{statistics}}.}
 
+  \item{\code{colname_for_variable_compact}}{: A character of length 1. Default is \code{intToUtf8(160)}, a non-breaking space.
+  This character will show up in the results of \code{\link{atable_compact}} as name of the first column.}
+
   \item{\code{statistics.numeric}}{: Either \code{NULL} or a function. Default is \code{NULL}.
   If a function, then it will replace \code{atable:::statistics.numeric} when atable is called.
   The function must mimic \code{\link{statistics}}: see the help there.}
@@ -137,7 +140,10 @@ The following options are supported:
    \item{\code{indent_character}}{: A Character with length 1. Passed to \code{indent_data_frame}. Every option of \code{format_to}
    has a corresponding indent_character. See the help of \code{atable} for these options. }
 
+   \item{\code{indent_character_compact}}{: A Character with length 1. Passed to \code{atable_compact}.
+   Value is \code{"   "} for viewing in the console. Use \code{"\\quad"} for Latex and \code{intToUtf8(160)} for Word.}
 
+  \item{\code{indent}}{: A logical with length 1. Passed to \code{atable}. Controls, if indent_data_frame is called.}
 
    \item{\code{format_statistics_compact.statistics_factor}}{: A function with the same Properties as \code{\link{format_statistics}}. Used as a
    default value for \code{\link{atable_compact}}}
@@ -145,6 +151,11 @@ The following options are supported:
    \item{\code{format_statistics_compact.statistics_numeric }}{: A function with the same Properties as \code{\link{format_statistics}}. Used as a
    default value for \code{\link{atable_compact}}}
 
+   \item{\code{format_statistics_longitudinal.statistics_factor}}{: A function with the same Properties as \code{\link{format_statistics}}. Used as a
+   default value for \code{\link{atable_longitudinal}}}
+
+   \item{\code{format_statistics_longitudinal.statistics_numeric }}{: A function with the same Properties as \code{\link{format_statistics}}. Used as a
+   default value for \code{\link{atable_longitudinal}}}
 }
 }
 

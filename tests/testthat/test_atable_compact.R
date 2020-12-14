@@ -2,60 +2,103 @@ context("atable_compact")
 library(atable)
 
 
-DD = atable::test_data
 
-target_cols = c("Numeric", "Factor", "Split2") # Split2 has tow levels. So
-a = atable_compact(DD,
-                   target_cols = target_cols,
-                   group_col = "Group",
-                   split_cols = NULL,
-                   format_to = "Console"
-)
+
+# Split2 has two levels. So only its first level is displayed.
+
 
 
 test_that("call atable_compact", {
+
+
+  tab = atable_compact(atable::test_data,
+                       target_cols = c("Numeric", "Factor", "Split2"))
+
+  expect_true(is.data.frame(tab))
+  expect_true(ncol(tab)==2)
+  expect_true(nrow(tab)==9)
+
   # only first level displayed as Split2 has only two levels, as defined by format_statistics_compact.statistics_factor of atable_options
-  expect_true(subset(a, variable___=="Split2", "tag", drop=TRUE) == levels(DD$Split2)[1])
-
-  # 'Mean_SD' is hardcoded in function format_statistics_compact.statistics_numeric in atable_options
-  expect_true(subset(a, variable___=="Numeric", "tag", drop=TRUE) == "Mean_SD")
-
-  expect_equal(nrow(a), length(target_cols) + 1) # +1 for observation row
+  expect_true(levels(atable::test_data[["Split2"]])[1] == tab[9,1])
 
 })
 
+test_that("grouped", {
+  tab = atable_compact(atable::test_data,
+                       target_cols = c("Numeric", "Factor", "Split2"),
+                       group_col = "Group")
 
-test_that("atable with indent = FALSE gives similar format as atable_compact", {
-
-  a = atable(DD,
-             indent = FALSE,
-             target_cols = target_cols,
-             format_to = "Console")
-
-  expect_true(all(class(a) %in% c("atable", "data.frame")))
+  expect_true(is.data.frame(tab))
+  expect_true(ncol(tab)==6)
+  expect_true(nrow(tab)==9)
 })
 
+test_that("grouped margins", {
+  tab = atable_compact(atable::test_data,
+                       target_cols = c("Numeric", "Factor", "Split2"),
+                       group_col = "Group",
+                       add_margins=TRUE)
 
-
-Hmisc::label(DD$Numeric) ="A Number"
-units(DD$Numeric) = "Arbitrary units"
-
-attr(DD$Factor, "alias") = "An Alias"
-
-test_that("add_margins and atable_compact", {
-
-  a = atable_compact(DD,
-                     target_cols = target_cols,
-                     group_col = "Group",
-                     split_cols = NULL,
-                     add_margins = TRUE,
-                     format_to = "Console")
-
-  expect_true("A Number [Arbitrary units]" == a$variable___[2] )
-  expect_true("An Alias" == a$variable___[3] )
-  expect_true(all(colnames(a) == c("variable___",  "tag", "Total", "Treatment", "Control", "p", "stat", "Effect Size (CI)")))
-
-  expect_true(nrow(a) == length(target_cols) + 1) # +1 for observation row
+  expect_true(is.data.frame(tab))
+  expect_true(ncol(tab)==7)
+  expect_true(nrow(tab)==9)
 })
 
+test_that("grouped margin blocks", {
 
+  tab = atable_compact(atable::test_data,
+                       target_cols = c("Numeric", "Factor", "Split2", "Split1"),
+                       group_col = "Group",
+                       add_margins=TRUE,
+                       blocks = list("Primary" = "Numeric",
+                                     "Secondary" = c("Factor", "Split2"))
+  )
+
+  expect_true(is.data.frame(tab))
+  expect_true(ncol(tab)==7)
+  expect_true(nrow(tab)==16)
+
+  expect_true(all(c("Primary", "Secondary") %in% tab[[1]]))
+})
+
+test_that("alias", {
+
+  DD = atable::test_data
+
+  attr(DD$Numeric, 'alias') = 'Consumption [Miles (US)/ gallon]'
+  Hmisc::label(DD$Split1) = 'A Splitting Variable'
+  units(DD$Split1) = 's'
+
+
+  tab = atable_compact(DD,
+                       target_cols = c("Numeric", "Factor", "Split2", "Split1")  )
+
+  expect_true(all(c("Consumption [Miles (US)/ gallon]", "A Splitting Variable [s]") %in% tab[[1]]))
+
+})
+
+test_that("alias blocks", {
+
+  DD = atable::test_data
+
+  attr(DD$Numeric, 'alias') = 'Consumption [Miles (US)/ gallon]'
+  Hmisc::label(DD$Split1) = 'A Splitting Variable'
+  units(DD$Split1) = 's'
+
+
+  tab = atable_compact(DD,
+                       target_cols = c("Numeric", "Factor", "Split2", "Split1"),
+                       blocks = list("First Block" = c("Numeric", "Factor"),
+                                     "Second Block" = "Split1"))
+
+  expect_true(is.data.frame(tab))
+  expect_true(ncol(tab)==2)
+  expect_true(nrow(tab)==16)
+
+  expect_true("First Block" == tab[[2,1]])
+  expect_true("Second Block" == tab[[11,1]])
+
+  expect_true(grepl(pattern = "Consumption [Miles (US)/ gallon]", x = tab[[3,1]], fixed = TRUE))
+  expect_true(grepl(pattern = "A Splitting Variable [s]", x = tab[[12,1]], fixed = TRUE))
+
+})
