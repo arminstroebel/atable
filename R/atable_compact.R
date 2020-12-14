@@ -88,10 +88,10 @@
 #' # Spaces at the beginning of a cell of a data.frame are somehow lost on the way to the docx.
 #' # Other indent_characters may also do the job.
 #'
-#' doc = officer::read_docx()
-#' doc = officer::body_add_table(doc,tab)
+#' # doc = officer::read_docx()
+#' # doc = officer::body_add_table(doc,tab)
 #'
-#' print(doc, target = "atable_Word.docx")
+#' # print(doc, target = "atable_Word.docx")
 #'
 #' # Other packages may exist for Word-export.
 #' }

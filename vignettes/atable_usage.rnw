@@ -52,8 +52,6 @@
 require(knitr)
 require(Hmisc)
 require(datasets)
-require(officer)
-require(flextable)
 require(utils)
 require(atable)
 
@@ -232,9 +230,9 @@ for_Word <- atable::atable(mpg + hp + gear + qsec ~ cyl | vs, mtcars,
 
 # print in Word with packages flextable and officer
 
-MyFTable <- flextable::regulartable(data = for_Word)
+# MyFTable <- flextable::regulartable(data = for_Word)
 # left aligned first column:
-MyFTable <- flextable::align(MyFTable, align = "left", j = 1)
+# MyFTable <- flextable::align(MyFTable, align = "left", j = 1)
 
 # save on disc. Not run here:
 # doc <- officer::read_docx()

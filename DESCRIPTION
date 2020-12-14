@@ -28,8 +28,6 @@ Imports:
 Suggests:
   testthat,
   knitr,
-  officer,
-  flextable,
   survival,
   rmarkdown
 URL: https://github.com/arminstroebel/atable
